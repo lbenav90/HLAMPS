@@ -1,10 +1,10 @@
-from tkinter import StringVar, BooleanVar, Radiobutton, Entry, Checkbutton, Label, Frame, Button
 from collections import OrderedDict
 from idlelib.tooltip import Hovertip
+from tkinter import StringVar, BooleanVar, Radiobutton, Entry, Checkbutton, Label, Frame, Button
 
 class Band:
+    ''' Contains the information and the widgets of a band '''
     def __init__(self, bandNum: int, frame: Frame):
-        ''' Initialize Band '''
         self.frame = frame
         
         self.name = f'B{bandNum}'
@@ -45,54 +45,71 @@ class Band:
         self.intensity.trace('w', self.detectEntry)
         
     def getName(self):
+        ''' Returns the name of the band '''
         return self.name
     
-    def setPos(self, s):
+    def setPos(self, s: float):
+        ''' Sets position variable '''
         self.position.set(s)
+        return 0
     
-    def setDec(self, s):
+    def setDec(self, s: float):
+        ''' Sets decay variable '''
         self.decay.set(s)
+        return 0
     
-    def setInt(self, s):
+    def setInt(self, s: float):
+        ''' Sets intensity variable '''
         self.intensity.set(s)
+        return 0
     
     def getPos(self):
+        ''' Gets position variable '''
         return self.position.get()
     
     def getDec(self):
+        ''' Gets decay variable '''
         return self.decay.get()
     
     def getInt(self):
+        ''' Gets the intensity variable '''
         return self.intensity.get()
     
     def detectEntry(self, name, index, trigger):
+        ''' Function triggered everytime a band parameter is changed.
+        Detects if the band parameter is fully collected and viable for plotting '''
+
+        # If any of the variables is the empty string, tha band is not collected
         if self.getPos() != '' and self.getDec() != '' and self.getInt() != '':
             self.collected = True       
         else:
             self.collected = False  
         
+        # If it was just initialized or the average spectra was just fitted, 
+        # a parameter change generates unsaved changes and fit changes.
         if self.unchangedFromLastFit:
             self.unchangedFromLastFit = False
             self.allChangesSaved = False
+        return 0
     
-    def getFixes(self, index):
+    def getFixes(self, index: int):
+        ''' Gets the fix parameter status for the average spectra fit.
+        index 0, 1 and 2 are for postion, decay and intensity, respectively. '''
         fixes = [self.posFix, self.decFix, self.intFix]
         return fixes[index].get()
-
-    def getAll(self):
-        print(self.getName(), self.getPos(), self.getDec(),
-              self.getInt(), self.getFixes(0), self.getFixes(1), 
-              self.getFixes(2), self.collected)
     
     def rename(self, numBand):
-        self.name = 'B' + str(numBand)
+        ''' Rename a Band element and return it '''
+        self.name = f'B{numBand}'
         return self
     
     @staticmethod
     def isNumber(s):
+        ''' Used to validate Entry widgets' input for ints, floats or empty strings'''
         return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == ''
     
     def destroy(self):
+        ''' Destroys all band widgets '''
         self.label.destroy()
         self.radio.destroy()
         self.posEntry.destroy()
@@ -101,18 +118,24 @@ class Band:
         self.posFixChk.destroy()
         self.decFixChk.destroy()
         self.intFixChk.destroy()
+        return 0
     
-    def addRadio(self, radioVar):
+    def addRadio(self, radioVar: StringVar):
+        ''' Adds the radiobutton for the band '''
         self.radio = Radiobutton(self.frame, value = self.name, 
                                       variable = radioVar)
     
         self.radio.grid(column = 2 * int(self.name[1:]) + 1, row = 4, sticky = 'w')
+        return 0
     
     def displayLayout(self):
+        ''' Generates widget display on the GUI '''
+        # Label with band name
         self.label = Label(self.frame, text = self.name)
         
         self.label.grid(column = 2 * int(self.name[1:]) + 1, row = 0)
         
+        # Entrys with input validation for parameters
         self.posEntry = Entry(self.frame, textvariable = self.position, 
                               width = 10, validate = 'all', 
                               validatecommand = (self.frame.register(self.isNumber), '%P'))
@@ -129,6 +152,7 @@ class Band:
         self.decEntry.grid(column = 2 * int(self.name[1:]) + 1, row = 2)
         self.intEntry.grid(column = 2 * int(self.name[1:]) + 1, row = 3)
         
+        # Checkboxes for parameter fix in spectra fitting
         self.posFixChk = Checkbutton(self.frame, variable = self.posFix)
         self.decFixChk = Checkbutton(self.frame, variable = self.decFix)
         self.intFixChk = Checkbutton(self.frame, variable = self.intFix)
@@ -136,47 +160,66 @@ class Band:
         self.posFixChk.grid(column = 2 * int(self.name[1:]) + 2, row = 1)
         self.decFixChk.grid(column = 2 * int(self.name[1:]) + 2, row = 2)
         self.intFixChk.grid(column = 2 * int(self.name[1:]) + 2, row = 3)
+
+        return 0
         
 class Bands:
+    ''' Contains all Band objects added to the GUI '''
     def __init__(self):
         self.bands = OrderedDict()
+
+        # Used to signal if Band parameter collection is ON
         self.collect = False
+
+        # Used to store (x, y) points while Band parameter collection is ON
         self.references = []
     
     def __iter__(self):
+        ''' Iteration happens over the dict values'''
         return iter(self.bands.values())
     
     def collecting(self):
+        ''' Checks if data collection is ON '''
         return self.collect
     
     def changeCollecting(self):
+        ''' Changes collection status '''
         self.collect = not self.collect
+        return 0
     
     def guideFitted(self):
+        ''' Passes the average spectra successful fit to the Band elements'''
         for band in self.bands.values():
             band.unchangedFromLastFit = True
     
     def checkFitted(self):
+        ''' Checks if any Band element parameters were changed since
+        last average spectra fit '''
         for band in self.bands.values():
             if not band.unchangedFromLastFit:
                 return False
         return True
     
     def checkChanges(self):
+        ''' Checks for unsaved changes '''
         for band in self.bands.values():
             if not band.allChangesSaved:
                 return False
         return True
     
     def saveChanges(self):
+        ''' Passes the saved changes update to the Band elements '''
         for band in self.bands.values():
             band.allChangesSaved = True
         return 0
     
-    def addBand(self, band):
+    def addBand(self, band: Band):
+        ''' Adds a new Band element '''
         self.bands[band.getName()] = band
+        return 0
     
     def getUsefulLength(self):
+        ''' Returns the number of Band elements which are fully collected '''
         useful = 0
         for name in self.bands:
             if self.bands[name].collected:
@@ -184,48 +227,64 @@ class Bands:
         return useful
 
     def getLength(self):
+        ''' Returns the total Band elements '''
         return len(self.bands)
     
     def bandDict(self):
+        ''' Returns a copy of the Bands as a dict '''
         return self.bands.copy()
     
-    def band(self, name):
+    def __getitem__(self, name: str):
+        ''' Returns a Band element on name input '''
         return self.bands[name]
     
     def enumerate(self):
+        ''' For enumeration of the Band elements '''
         return enumerate(self.bands.values())
     
-    def deleteBand(self, name):
+    def deleteBand(self, name: str):
+        ''' Delete the currently selected band '''
         self.bands.pop(name)
         
         tempBands = OrderedDict()
-        newNumBand = 0
-        for band in self.bands:
-            tempBands['B' + str(newNumBand)] = self.bands[band].rename(newNumBand)
-            newNumBand += 1
+
+        # Populate a new OrderedDict renaming all remaining Bans elements
+        for index, band in enumerate(self.bands):
+            tempBands[f'B{index}'] = self.bands[band].rename(index)
         
+        # Copy the tempBands onto the real bands dict
         self.bands = tempBands.copy()
+        return 0
     
     def clearBands(self):
+        ''' Destroys all Band elements and reinitializes the class '''
         for name in self.bands:
             self.bands[name].destroy()
+
         self.bands.clear()
         self.collect = False
         self.references = []
+        return 0
     
     def clearEmptyBands(self):
+        ''' Destroys all Band elements which are not fully collected '''
         for name in self.bands:
             if not self.bands[name].collected:
                 self.bands[name].destroy()
         self.collect = False
         self.references = []
+        return 0
  
-    def updateLayout(self, radioVar):
+    def updateLayout(self, radioVar: StringVar):
+        ''' Updates the GUI layout and adds Radiobuttons '''
         for band in self.bands:
             self.bands[band].displayLayout()
             self.bands[band].addRadio(radioVar)
+        return 0
     
     def addReference(self, x, y, name):
+        ''' Adds a new reference point while collecting Band parameters.
+        If upon collection, references has 3 datapoints, it extracts the parameters.'''
         self.references.append([x, y])
         if len(self.references) == 3:
             self.extractParameters(name)
@@ -234,28 +293,37 @@ class Bands:
             return False
     
     def extractParameters(self, name):
+        ''' Uses 3 reference points collected to calculate Band parameters '''
+        band = self.bands[name]
         
-        band = self.band(name)
+        # Set Band parameters
+        band.setPos(f'{self.references[0][0]:.2f}')
+        band.setDec(f'{abs(self.references[0][0] - self.references[1][0]):.2f}')
+        band.setInt(f'{abs(self.references[2][1] - self.references[0][1]):.2f}')
         
-        band.setPos(round(self.references[0][0], 2))
-        band.setDec(round(abs(self.references[0][0] - 
-                              self.references[1][0]), 2))
-        band.setInt(round(abs(self.references[2][1] - 
-                              self.references[0][1]), 2))
-        
+        # Turn collection OFF and reinitialize references
         self.references.clear()
         self.changeCollecting()
+        return 0
 
 class FitBaseline:
-    def __init__(self, frame):
+    ''' Contains the parameters and relevant widgets for the linear baseline
+    used for spectra fitting '''
+    def __init__(self, frame: Frame):
+        # Variables and fix statuses
         self.slope = StringVar(value = '')
         self.offset = StringVar(value = '')
         self.fixSlope = BooleanVar(value = False)
         self.fixOffset = BooleanVar(value = False)
+
+        # Plot data collection status and reference point temp list
         self.select = BooleanVar(value = False)
         self.references = []
+
+        # All changes were saved
         self.allChangesSaved = True
         
+        # Button to turn collection ON
         self.defButton = Button(frame, text = 'Select', command = self.changeSelect)
         self.defButton.grid(column = 0, row = 0, sticky = 'nw')
 
@@ -263,6 +331,7 @@ class FitBaseline:
                  'Define baseline by selecting in graph', 
                  hover_delay = 1000)
         
+        # Entrys with input validation for baseline parameters and checkbuttons for fix status
         self.offsetEntry = Entry(frame, textvariable = self.offset, 
                                  width = 10, validate = 'all', 
                                  validatecommand = (frame.register(self.isNumber), '%P'))
@@ -281,25 +350,36 @@ class FitBaseline:
                                       variable = self.fixSlope)
         self.slopeCheck.grid(column = 2, row = 3, sticky = 'w')
         
+        # Trace the parameter variables to detect when unsaved changes 
         self.offset.trace('w', self.changeMade)
         self.slope.trace('w', self.changeMade)
     
-    def changeMade(self, x, y, z):
-        self.allChangesSaved
+    def changeMade(self, name, index, trigger):
+        ''' Function triggers upon parameter change '''
+        self.allChangesSaved = False
+        return 0
     
     def getSlope(self):
+        ''' Get slope parameter'''
         return self.slope.get()
 
     def getOffset(self):
+        ''' Get offset parameter '''
         return self.offset.get()
     
-    def setOffset(self, s):
+    def setOffset(self, s: str):
+        ''' Sets offset parameter '''
         self.offset.set(s)
+        return 0
     
-    def setSlope(self, s):
+    def setSlope(self, s: str):
+        ''' Sets slope parameter '''
         self.slope.set(s)
+        return 0
     
     def addReference(self, x, y):
+        ''' Add a reference point to temp list.
+        If upon collection, the list has 2 points, extracts the baseline parameters.'''
         self.references.append([x, y])
         if len(self.references) == 2:
             self.extractParameters()
@@ -308,9 +388,11 @@ class FitBaseline:
             return False
     
     def selectOn(self):
+        ''' Checks if baseline parameter collection is ON '''
         return self.select.get()
     
     def clearBase(self):
+        ''' Reinitializes class '''
         self.slope.set('')
         self.offset.set('')
         self.fixOffset.set(False)
@@ -319,22 +401,29 @@ class FitBaseline:
         self.select.set(False)
         self.defButton.config(bg = '#f0f0f0')
         self.allChangesSaved = True
+        return 0
     
     def changeSelect(self):
+        ''' Changes baseline parameter collection status '''
         self.select.set(not self.select.get()) 
+        # Change color of button to reflect status
         self.defButton.config(bg = '#95CCD9' * self.select.get() + 
                               '#f0f0f0' * (1 - self.select.get()))
+        return 0
     
     def extractParameters(self):
-        self.slope.set(str(round((self.references[0][1] - self.references[1][1])
-                                 /(self.references[0][0] - self.references[1][0]), 3)))
-        self.offset.set(str(round(self.references[0][1] 
-                                  - float(self.getSlope()) * self.references[0][0], 3)))
+        ''' Uses the 2 reference points in references to calculate baseline parameters'''
+        newSlope = (self.references[0][1] - self.references[1][1]) / (self.references[0][0] - self.references[1][0])
+        newOffset = self.references[0][1] - newSlope * self.references[0][0]
+
+        self.slope.set(f'{newSlope:.3f}')
+        self.offset.set(f'{newOffset:.2f}')
         
+        #Reinitialize 
         self.references.clear()
-    
-        self.defButton.config(bg = '#f0f0f0')
+        self.changeSelect()
         
     @staticmethod
     def isNumber(s):
+        ''' Input validation for Entry widgets '''
         return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == ''

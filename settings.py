@@ -1,7 +1,10 @@
+import os
+
 # Directory where the main.py script is located
 INSTALL_DIR = 'C:/Users/Lean/Desktop/LeanPipsi'
 
 TEMP_PATH = f'{INSTALL_DIR}/temp'
+os.makedirs(TEMP_PATH, exist_ok = True)
 
 IMAGES = f'{INSTALL_DIR}/images'
 

@@ -1,5 +1,8 @@
+from matplotlib.pyplot import Axes
+
 class Limits:
-    def __init__(self, axes):
+    ''' Class containing the current Limits of the plot in Plot Frame'''
+    def __init__(self, axes: Axes):
         self.axes = axes
         self.xmin, self.xmax  = axes.get_xlim()
         self.ymin, self.ymax  = axes.get_ylim()

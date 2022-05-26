@@ -8,13 +8,13 @@ from Bands import Band, Bands, FitBaseline
 from tkinter.filedialog import askopenfilename
 from lmfit import Parameters, Minimizer, fit_report, MinimizerResult
 from tkinter.messagebox import showinfo, showwarning, askyesno, showerror
-from tkinter import ttk, StringVar, BooleanVar, Canvas, Frame, Label, Button, Checkbutton
+from tkinter import Tk, ttk, StringVar, BooleanVar, Canvas, Frame, Label, Button, Checkbutton
 
 class FitTab(ttk.Frame):
     ''' Contains all variables and widgets of the Fit Spectra Tab '''
     def __init__(self, notebook: ttk.Notebook):
         super().__init__(notebook)
-        self.master = notebook
+        self.notebook = notebook
         self.window = notebook.window # GUI class instance
 
         # Tab specific variables
@@ -748,74 +748,98 @@ class FitTab(ttk.Frame):
         return 0
     
     @staticmethod
-    def drawFitFigure(frequencies, intensities, key, fit, bandFit, params, map):
-            
+    def drawFitFigure(frequencies: list, intensities: list, key: tuple, fit: list, bandFit: dict, params: Parameters, map: Map):
+        ''' Generate figures for spectra fitting. '''
         fig = plt.Figure()
         
+        # Add subplot
         plot1 = fig.add_subplot(111, xlabel = 'Wavenumber (cm-1)', ylabel = 'Intensity')
         
+        # Plot data and total band fit
         plot1.plot(frequencies, intensities, 'k')
         plot1.plot(frequencies, fit, 'r', alpha = 0.8)
         
+        # Plot each Band element
         for peak in range(len(bandFit)):
             plot1.plot(frequencies, bandFit[f'B{peak}'], alpha = 0.5)
         
         v = params.valuesdict()
+        # Plot baseline
         plot1.plot(frequencies, np.array(frequencies) * v['slope'] + v['offset'], alpha = 0.5)
         
-        x = key[0].split('.')[0]
-        y = key[1].split('.')[0]
+        # Remove decimal to avoid filename corruption
+        x = key[0].replace('.', '')
+        y = key[1].replace('.', '')
+
+        # Save the number of decimals for the filename
+        if '.' in key[0]:
+            xDec = len(key[0]) - key[0].index('.') - 1
+        else:
+            xDec = 0
+        
+        if '.' in key[1]:
+            yDec = len(key[1]) - key[1].index('.') - 1
+        else:
+            yDec = 0
         
         os.chdir(f'{map.orig}_Files/Fits/Figures')
         
-        fig.savefig(f'{map.name}_X_{x}_Y_{y}_fit.png')
+        fig.savefig(f'{map.name}_X_{x}_E-{xDec}_Y_{y}_E-{yDec}_fit.png')
         plt.close()
         
         os.chdir(map.directory)
         return 0
 
-    def displaySpectra(self, window = None):
+    def displaySpectra(self, window: Tk = None):
+        ''' Display current average spectra with the Tab specific plots. '''
         if window is None:
-            window = self.master.master
+            window = self.window
             
         if window.maps.isEmpty():
             return 1
         
         window.getAverageSpectra()
         
+        # Reinitialize plot
         plot = window.plotFrame.figure.reInitPlot()
         
+        # Get the index for the selected Map in Legend Frame
         for index, average in window.averages.enumerate():
             if average[0].orig == window.varSelectedMap.get():
                 selectedMapIndex = index
                 break
         
-        for col, spectra in window.averages.enumerate():  
+        for col, spectra in window.averages.enumerate(): 
+            # Plot every average spectra 
             plot.plot(spectra[1][0], spectra[1][1], 
                       color = COLORS[col % len(COLORS)])
             
+            # Only continue plotting Band elements for the currently selected Map
             if col != selectedMapIndex:
                 continue
             
-            if self.fitBase.getOffset() == '' and self.fitBase.getSlope() == '' and self.fitBands.getUsefulLength() != 0:
-                self.fitBase.setOffset('0.0')
-                self.fitBase.setSlope('0.0')
+            # If there are collected Band elements, ensure that no baseline parameters are undefined
+            if self.fitBands.getUsefulLength() != 0:
+                if self.fitBase.getOffset() == '':
+                    self.fitBase.setOffset('0.0')
+                if self.fitBase.getSlope() == '':
+                    self.fitBase.setSlope('0.0')
             
-            if self.fitBase.getOffset() != '' and self.fitBase.getSlope() != '':
+                # Only plot if there are collected Band elements
                 offset = float(self.fitBase.getOffset())
                 slope = float(self.fitBase.getSlope())
                 spectraBase = np.array(spectra[1][0]) * slope + offset 
                             
                 plot.plot(spectra[1][0], spectraBase, c = '#444444')
-        
-            if self.fitBands.getUsefulLength() != 0 :
                 
                 fitParams = self.createGuideParams()
                 
+                # Calculate model for current Band elements and plot
                 spectraFit = self.calculateModel(fitParams, spectra[1][0])
                 
                 plot.plot(spectra[1][0], spectraFit, c = '#191919')
                 
+                #Plot each individal Band elements
                 for band in self.fitBands:
                     bandParams = self.createGuideParams({'B0': band})
                     bandFit = self.calculateModel(bandParams, spectra[1][0])
@@ -824,24 +848,30 @@ class FitTab(ttk.Frame):
         window.plotFrame.figure.saveLimits()
         window.plotFrame.figure.drawCanvas()
         
+        # Update limits in Status Frame
         self.window.statFrame.getLimits()
-        
         return 0
 
-    def handleMouseEvent(self, x, y):
+    def handleMouseEvent(self, x: float, y: float):
+        ''' Function triggered upon a mouse event on the plot, when the Fit tab is active. '''
         if self.fitBands.collecting():
+            # If Band parameter collection is ON, add a reference point to the currently selected Band
             name = self.varSelectedBand.get()
             if self.fitBands.addReference(x, y, name):
+                # addReference method returns True if all 3 reference points are gathered and collection is finished
                 self.fitBands.changeCollecting()
                 self.btnSelectBand.config(bg = '#f0f0f0')
                 self.displaySpectra()
                 
+                # Change Radiobutton selection to next Band element un less this is the last one
                 if self.varSelectedBand.get() != f'B{self.fitBands.getLength() - 1}':
                     newBand = int(self.varSelectedBand.get()[1:]) + 1
                     self.varSelectedBand.set(f'B{newBand}')
                 
         elif self.fitBase.selectOn():
+            # If fit baseline collection is ON, add a reference point to FitBaseline element
             if self.fitBase.addReference(x, y):
+                # addReference method returns True if all 2 reference points were gathered and collection is finished
                 self.fitBase.changeSelect()
                 self.displaySpectra()
                 

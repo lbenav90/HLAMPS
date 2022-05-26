@@ -1,27 +1,34 @@
 import os
 import numpy as np
+from Maps import Map
 from settings import COLORS
 import matplotlib.pyplot as plt
 from idlelib.tooltip import Hovertip
 from Bands import Band, Bands, FitBaseline
 from tkinter.filedialog import askopenfilename
-from lmfit import Parameters, Minimizer, fit_report
+from lmfit import Parameters, Minimizer, fit_report, MinimizerResult
 from tkinter.messagebox import showinfo, showwarning, askyesno, showerror
 from tkinter import ttk, StringVar, BooleanVar, Canvas, Frame, Label, Button, Checkbutton
 
 class FitTab(ttk.Frame):
-    def __init__(self, master: ttk.Notebook):
-        super().__init__(master)
-        self.master = master
-        self.window = master.master # GUI class instance
+    ''' Contains all variables and widgets of the Fit Spectra Tab '''
+    def __init__(self, notebook: ttk.Notebook):
+        super().__init__(notebook)
+        self.master = notebook
+        self.window = notebook.window # GUI class instance
+
+        # Tab specific variables
         self.varSelectedBand = StringVar(value = 'None')
         self.varChkFix = BooleanVar(value = False)
         self.varChkFitFig = BooleanVar(value = False)
         self.varChkSaveHeat = BooleanVar(value = False)
         self.varChkInstructions = BooleanVar(value = False)
+
         self.configureLayout()
+        return 0
     
     def clearTab(self):
+        ''' Reinitialize tab '''
         self.varSelectedBand.set('None')
         self.varChkFix.set(False)
         self.varChkFitFig.set(False)
@@ -29,8 +36,11 @@ class FitTab(ttk.Frame):
         self.varChkInstructions.set(False)
         self.fitBase.clearBase()
         self.fitBands.clearBands()
+        return 0
     
     def discardChanges(self):
+        ''' Upon a tab change, checks for unsaved changes. If present,
+        asks for confirmation. '''
         if self.checkChanges():
             self.clearTab()
             return True
@@ -42,9 +52,13 @@ class FitTab(ttk.Frame):
             return False
     
     def checkChanges(self):
+        ''' Check for unsaved changes. Returns True if there are none'''
         return self.fitBands.checkChanges() and self.fitBase.allChangesSaved
     
     def configureLayout(self):
+        ''' Setup tab's widget layout '''
+
+        # Make the tab scrollable
         self.tabFitCanvas = Canvas(self)
         self.tabFitScrollbar = ttk.Scrollbar(self, orient = 'horizontal', 
                                              command = self.tabFitCanvas.xview)
@@ -57,16 +71,22 @@ class FitTab(ttk.Frame):
         self.tabFitCanvas.config(xscrollcommand = self.tabFitScrollbar.set)
         self.tabFitCanvas.pack(side = 'bottom', fill = 'both', expand = True)
         self.tabFitScrollbar.pack()
+        # Make the tab scrollable
         
+        # Frames for tab sectioning
         self.tabFitBaseline = Frame(self.tabFitScrollable)
         self.tabFitBaseline.grid(column = 0, row = 1, sticky = 'nw')
+
         self.tabFitBandsAll = Frame(self.tabFitScrollable)
         self.tabFitBandsAll.grid(column = 1, row = 1, sticky = 'nw')
+
         self.tabFitBandsButtons = Frame(self.tabFitBandsAll)
         self.tabFitBandsButtons.grid(column = 0, row = 0, sticky = 'w')
+
         self.tabFitBandsParams = Frame(self.tabFitBandsAll)
         self.tabFitBandsParams.grid(column = 0, row = 1, sticky = 'w')
         
+        # Label configuration
         Label(self.tabFitBaseline, text = ' '       ).grid(column = 0, row = 1)
         Label(self.tabFitBaseline, text = 'Offset: ').grid(column = 0, row = 2, sticky = 'w')
         Label(self.tabFitBaseline, text = 'Slope: ' ).grid(column = 0, row = 3, sticky = 'w')
@@ -75,6 +95,7 @@ class FitTab(ttk.Frame):
         Label(self.tabFitBandsParams, text = 'Decay: '    ).grid(column = 0, row = 2, sticky = 'w')
         Label(self.tabFitBandsParams, text = 'Intensity: ').grid(column = 0, row = 3, sticky = 'w')
         
+        # Button configuration
         self.btnShowFitBase = Button(self.tabFitBaseline, text = 'Show', 
                                      command = self.displaySpectra)
         self.btnShowFitBase.grid(column = 1, row = 0, sticky = 'nw')
@@ -115,9 +136,6 @@ class FitTab(ttk.Frame):
                                        variable = self.varChkSaveHeat)
         self.chkSaveHeat.grid(column = 8, row = 0, sticky = 'w')
         
-        self.fitBands = Bands()
-        self.fitBase = FitBaseline(self.tabFitBaseline)
-        
         Hovertip(self.btnShowFitBase, 
                  'Show current baseline and bands', 
                  hover_delay = 1000)
@@ -149,30 +167,41 @@ class FitTab(ttk.Frame):
         Checkbutton(self.tabFitBaseline, text = 'Show\ninstructions', 
                     variable = self.varChkInstructions
                     ).grid(column = 0, columnspan = 2, row = 4, sticky = 'w')
+        
+        # Create fit parameter elements
+        self.fitBands = Bands()
+        self.fitBase = FitBaseline(self.tabFitBaseline)
     
     def addBand(self):
+        ''' Adds a new Band element with its corresponding name. '''
         bandNum = self.fitBands.getLength()
     
+        # Create new Band element and add radiobutton
         newBand = Band(bandNum, self.tabFitBandsParams)
-        
         newBand.addRadio(self.varSelectedBand)
         
+        # Add new Band element to Bands class
         self.fitBands.addBand(newBand)
-                                                 
+
+        # Select a band radiobutton if none is                       
         if self.varSelectedBand.get() == 'None':
             self.varSelectedBand.set(f'B{self.fitBands.getUsefulLength()}') 
         
         return 0
     
     def delBand(self):
+        ''' Delete the Band element selected by radiobutton. '''
         if self.fitBands.getLength() == 0:
             return 1
         
+        # Delete the Band element from Bands element
         self.fitBands.deleteBand(self.varSelectedBand.get())
         
+        # Destroy everything in parameter containing Frame
         for widget in self.tabFitBandsParams.winfo_children():
             widget.destroy()
         
+        # Reconfigure the Frame layout with the new band order
         Label(self.tabFitBandsParams, text = ' '          ).grid(column = 0, row = 0, sticky = 'w')
         Label(self.tabFitBandsParams, text = 'Position: ' ).grid(column = 0, row = 1, sticky = 'w')
         Label(self.tabFitBandsParams, text = 'Decay: '    ).grid(column = 0, row = 2, sticky = 'w')
@@ -182,101 +211,123 @@ class FitTab(ttk.Frame):
         
         self.varSelectedBand.set('B0')
         
+        # Display the spectra with the current Bands
         self.displaySpectra()
         
         return 0
     
     def selectBandParams(self):
+        ''' Turns on Band parameter selection from plot. '''
         if self.window.maps.isEmpty():
             return 1
         
+        # Only do it if a Band element is avaliable
+        # Maybe if there are no Band elements, add one?
         if self.fitBands.getLength() == 0:
             showwarning('Warning', 
                         'No bands added')
             return 1
         
+        # Shows information on how to collect parameters
+        # Maybe put an image with the instructions also
         if self.varChkInstructions.get():
-            showinfo(title = 'Instructions', 
-                     message = 'Select three point from the graph:\n\t' + 
-                               'The first defines position\n\t' + 
-                               'Difference between first and second defines decay\n\t' + 
-                               'Difference between first and third defines intensity')
+            showinfo('Instructions', 
+                     'Select three point from the graph:\n\t' + 
+                     'The first defines position\n\t' + 
+                     'Difference between first and second defines decay\n\t' + 
+                     'Difference between first and third defines intensity')
         
+        # Deactivate fit baseline selection
         self.fitBase.select.set(False)
         
+        # Change button color to represent selection
         self.btnSelectBand.config(bg = '#95CCD9')
         
         self.fitBands.changeCollecting()
+        return 0
     
-    @staticmethod
-    def calculateModel(params, x):
+    def calculateModel(self, params: Parameters, x: list):
         '''
         Uses params to create the model y data. Corresponds to a sum of Lorentzian peaks on a linear baseline
         
-        - params (Parameters): Contains Parameter instances to be used for the model
+        - params: Contains Parameter instances to be used for the model
         
-        _ x: list of x values to be computed in the creation of the model
+        - x: list of x values to be computed in the creation of the model
         
         '''
-        numPeaks = int((len(params) - 2) / 3)
+        numPeaks = self.fitBands.getUsefulLength()
         
+        # Create an empty array
         y = np.zeros(len(x))
         
         v = params.valuesdict()
         
         offset, slope = v['offset'], v['slope']
         
+        # Add the linear baseline defined by slope and offset
         y += offset
         for i in range(len(x)):
             y[i] += slope * x[i]
             
         x = np.array(x)
+        # For each peak, adds a lorentzian function with the corresponding parameters
         for i in range(numPeaks):
-            p, d, h = v['x' + str(i)], v['d' + str(i)], v['h' + str(i)]
+            p, d, h = v[f'x{i}'], v[f'd{i}'], v[f'h{i}']
             y += (h * ((0.5 * d) ** 2)) * (1 / (((x - p) ** 2) + ((0.5 * d) ** 2)))    
         
         return y
     
-    def createGuideParams(self, bandCreate = {}):
-        '''
-        bandCreate is a dict returned from .bandDict() method in Bandas class, each value a Band element
-        '''
+    def createGuideParams(self, bandCreate: dict = {}):
+        ''' bandCreate is a dict returned from .bandDict() method in Bandas class, each value a Band element.
+        If it is not given, the function uses all Band elements from Bands element. 
+        It allows for a specific Band element dict as input to use the same function to plot individual peaks '''
+        # If it is not given, use all Band elements
         if bandCreate == {}: bandCreate = self.fitBands.bandDict() 
         
         params = Parameters()
         
+        # Add linear baseline parameters with corresponding fix parameter statuses
         params.add('offset', value = float(self.fitBase.getOffset()), 
                    vary = not self.fitBase.fixOffset.get())
         params.add('slope', value = float(self.fitBase.getSlope()), 
                    vary = not self.fitBase.fixSlope.get())
         
-        for bandNum in range(len(bandCreate)):
+        for bandNum, band in enumerate(bandCreate):
             bandName = f'B{bandNum}'
-            if bandCreate[bandName].collected:
-                params.add(f'x{bandNum}', value = float(bandCreate[bandName].getPos()), 
-                           vary = not bandCreate[bandName].getFixes(0), 
+
+            # If the band is collected, add the parameters
+            if band.collected:
+                params.add(f'x{bandNum}', 
+                           value = float(band.getPos()), 
+                           vary = not band.getFixes(0), 
                            min = self.window.plotFrame.figure.getLimits()[1].getXLim()[0], 
                            max = self.window.plotFrame.figure.getLimits()[1].getXLim()[1])
-                params.add(f'd{bandNum}', value = float(bandCreate[bandName].getDec()), 
-                           vary = not bandCreate[bandName].getFixes(1), min = 0)
-                params.add(f'h{bandNum}', value = float(bandCreate[bandName].getInt()), 
-                           vary = not bandCreate[bandName].getFixes(2), min = 0)
+                params.add(f'd{bandNum}', 
+                           value = float(band.getDec()), 
+                           vary = not band.getFixes(1), min = 0)
+                params.add(f'h{bandNum}', 
+                           value = float(band.getInt()), 
+                           vary = not band.getFixes(2), min = 0)
+
         return params
     
-    def cost(self, params, yData, x):
+    def cost(self, params: Parameters, yData: list, xData: list):
+        ''' Cost function to be minimized by lmfit
+        
+        - params: Initial guess for the fit. Contains Parameter instances to be used for the model
+        
+        - yData: intensity values for the model to be compared to
+        
+        - xData: frequency values to be computed in the creation of the model
         '''
-        Cost function to be minimized by lmfit
-        
-        - params (Parameters): Guess for the fit. Contains Parameter instances to be used for the model
-        
-        - y_data: list of Y values fot he model to be compared to
-        
-        _ x: list of x values to be computed in the creation of the model
-        '''
-        yModel = self.calculateModel(params, x)
+        yModel = self.calculateModel(params, xData)
         return yData - yModel
     
     def importBands(self):
+        ''' Import Band elements used in a previous fit by this program.
+        The valid import files are created by the fit_report function in lmfit package. '''
+        # Ask if it should delete current Band elements.
+        # If not, only clear the bands not fully collected
         if self.fitBands.getUsefulLength() != 0:
             response = askyesno('Warning',
                                 'Do you want to delete the ' + 
@@ -286,6 +337,7 @@ class FitTab(ttk.Frame):
             else:
                 self.fitBands.clearEmptyBands()
         
+        # Open file dialog
         filename = askopenfilename(title = 'Open band parameters', 
                                    initialdir = '/', 
                                    filetypes = (('Text files', '*.txt'),))
@@ -293,16 +345,31 @@ class FitTab(ttk.Frame):
         with open(filename, 'r') as file:
             lines = file.readlines()
         
+        # List of parameter values to be imported
         toImport = []
         
+        # Due to variability of the file length, we need to check for specific lines,
+        # between which the Band parameters are located
+        startIndex = None
+        endIndex = None
         for line in lines:
             if 'Variables' in line:
                 startIndex = lines.index(line) + 1
             elif 'Correlations' in line:
                 endIndex = lines.index(line)
         
+        # Check if the file format is correct; both startIndex and endIndex must be changed
+        if startIndex is None or endIndex is None:
+            showerror('Wrong file type',
+                                'Selected file is not the right' + 
+                                ' format for parameter import\n' +
+                                'File must be the result of a guide fit')
+            return 1
+
+        # Slice the file to include only the parameter section
         lines = lines[startIndex: endIndex]
         
+        # Check for each remaining line, which parameter it corresponds to
         for line in lines:
             lineSplit = line.split()
             if 'offset' in lineSplit[0]:
@@ -312,58 +379,69 @@ class FitTab(ttk.Frame):
             elif 'x' in lineSplit[0] or 'd' in lineSplit[0] or 'h' in lineSplit[0]:
                 toImport.append(round(float(lineSplit[1]),2))    
         
-        if toImport == []:
-            showerror('Wrong file type',
-                      'Selected file is not the right' + 
-                      ' format for parameter import\n' +
-                      'File must be the result of a guide fit')
+        # Check for error importing
+        if toImport == [] or len(toImport) % 3 != 0:
+            showerror('No parameters',
+                      'No parameters to import or incorrect number of parameters to import')
             return 1
-        
+
+        # Get chunks of three parameters from toImport, corresponding to a Band element
         for i in range(0, len(toImport), 3):
             bandNum = self.fitBands.getLength()
             self.addBand()
             
             self.fitBands.band(f'B{bandNum}').setPos(toImport[i])
             self.fitBands.band(f'B{bandNum}').setDec(toImport[i + 1])
-            self.fitBands.band('fB{bandNum}').setInt(toImport[i + 2])
+            self.fitBands.band(f'B{bandNum}').setInt(toImport[i + 2])
         
+        # Set linear baseline parameters
         self.fitBase.setOffset(offset)
         self.fitBase.setSlope(slope)
         
+        # Displat new fit configuration
         self.displaySpectra()
         
+        # Log process
         self.window.insertLog('importfit')
         return 0
     
     def fitAverageSpectra(self):
+        ''' Fit the selected average spectra with the current collected Band elements '''
         if self.window.maps.isEmpty():
             return 1
-            
+        
+        # Only allow a fit with at least one fully collected Band element
         if self.fitBands.getUsefulLength() == 0:
             showerror('Error', 
                       'No defined bands to perform fit')
             return 1
         
+        # Create initial guess
         params = self.createGuideParams()
         
-        numPeaks = int((len(params) - 2) / 3)
+        numPeaks = self.fitBands.getUsefulLength()
         
+        # Get the index for the currently selected map in the Legend Frame
         for index, map in self.window.maps.enumerate():
             if self.window.varSelectedMap.get() == map.orig:
                 mapIndex = index
                 break
         
+        # Gte the current average spectra from temp
         self.window.getAverageSpectra()
         
+        # Gte the spectral data from the selected map
         intensities = self.window.averages[index][1][1]
         frequencies = self.window.averages[index][1][0]
         
+        # Performs minimization of cost function
         minner = Minimizer(self.cost, params, 
                            fcn_args = (intensities, frequencies))
         result = minner.minimize()
         bestParams = result.params
         v = bestParams.valuesdict()
         
+        # Set the baseline and Band parameters to the optimized result
         self.fitBase.setOffset(f'{v["offset"]:.2f}')
         self.fitBase.setSlope(f'{v["slope"]:.3f}')
         
@@ -372,12 +450,25 @@ class FitTab(ttk.Frame):
             self.fitBands.band(f'B{peak}').setDec(round(v[f'd{peak}'], 2))
             self.fitBands.band(f'B{peak}').setInt(round(v[f'h{peak}'], 2))
         
+        # Display optimized result
         self.displaySpectra()
         
+        # Check if the fit is acceptable
         answer = askyesno('Guide fit result', 
                           'Do you accept the fit?')
         
-        if not answer:
+        # If acceptable, polish the program atatus and save the fit parameters
+        if answer:
+            self.fitBands.clearEmptyBands()
+            self.varSelectedBand.set(f'B{self.fitBands.getUsefulLength() - 1}')
+            self.saveFitParameters(mapIndex, result)
+            self.fitBands.guideFitted()
+            
+            self.window.insertLog('fitGuide')
+        
+            return 0
+        # If not acceptable, return displayed parameters to initial guess
+        else:
             v = params.valuesdict()
             for peak in range(numPeaks):
                 self.fitBands.band(f'B{peak}').setPos(round(v[f'x{peak}'], 2))
@@ -388,17 +479,10 @@ class FitTab(ttk.Frame):
             self.fitBase.setSlope(f'{v["slope"]:.3f}')
             self.displaySpectra()
             return 1
-        else:
-            self.fitBands.clearEmptyBands()
-            self.varSelectedBand.set(f'B{self.fitBands.getUsefulLength() - 1}')
-            self.saveFitParameters(mapIndex, result)
-            self.fitBands.guideFitted()
-            
-            self.window.insertLog('fitGuide')
-        
-            return 0
     
-    def saveFitParameters(self, mapIndex, result):
+    def saveFitParameters(self, mapIndex: int, result: MinimizerResult):
+        ''' Save the accepted fit parameters to a file for future reference and import. 
+        For each of the currently analyzed maps, write a fit_report output in each folder. '''
         for map in self.window.maps:
             os.chdir(map.directory)
             
@@ -407,156 +491,185 @@ class FitTab(ttk.Frame):
             with open(f'{map.orig}_Files/Parameters/GuideFitParams.txt', 'w') as newFile:
                 newFile.write(fit_report(result))
             
-            return 0
+        return 0
         
     def createMapParams(self):
-        '''
-        bandCreate is a dict returned from .bandDict() method in Bandas class, 
-        Each value a Band instance
-        '''
+        '''bandCreate is a dict returned from .bandDict() method in Bandas class, where each value a Band instance.
+        Differs from createGuideParams in that it doesn't allow for full variation of positions and decays. '''
+        # Get the current Bands element
         bandCreate = self.fitBands.bandDict()
         params = Parameters()
         
+        # Add current linear baseline parameters
         params.add('offset', value = float(self.fitBase.getOffset()))
         params.add('slope', value = float(self.fitBase.getSlope()))
         
-        for bandName in bandCreate:
+        # No need to check for empty bands, as the program only allows to fit the maps 
+        # if no changes were made after last average fit
+        for bandNum, band in enumerate(bandCreate.values()):
+            # If position and decay fix Chechbutton True, vary = False for those parameters
             if self.varChkFix.get():
-                params.add(f'x{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getPos()), 
+                params.add(f'x{bandNum}', 
+                           value = float(band.getPos()), 
                            vary = False)
-                params.add(f'd{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getDec()), 
+                params.add(f'd{bandNum}', 
+                           value = float(band.getDec()), 
                            vary = False)
-                params.add(f'h{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getInt()), 
+                params.add(f'h{bandNum}', 
+                           value = float(band.getInt()), 
                            min = 0)
+            # If not, allow a +- 3 in each parameter to accomodate inhomogeneity
             else:
-                params.add(f'x{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getPos()), 
-                           min = float(bandCreate[bandName].getPos()) - 3, 
-                           max = float(bandCreate[bandName].getPos()) + 3)
-                params.add(f'd{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getDec()),
-                           min = float(bandCreate[bandName].getDec()) - 3, 
-                           max = float(bandCreate[bandName].getDec()) + 3)
-                params.add(f'h{bandName[1:]}', 
-                           value = float(bandCreate[bandName].getInt()), 
+                params.add(f'x{bandNum}', 
+                           value = float(band.getPos()), 
+                           min = float(band.getPos()) - 3, 
+                           max = float(band.getPos()) + 3)
+                params.add(f'd{bandNum}', 
+                           value = float(band.getDec()),
+                           min = float(band.getDec()) - 3, 
+                           max = float(band.getDec()) + 3)
+                params.add(f'h{bandNum}', 
+                           value = float(band.getInt()), 
                            min = 0)
         return params
     
     def fitMap(self):
+        ''' Fit all spectra in a map using the result of the average spectra fit. '''
         if self.window.maps.isEmpty():
             return 1
             
+        # Only allow map fitting if there were no changes or additions to Bands element after
+        # the last average spectra fit.
         if not self.fitBands.checkFitted():
             showerror('Error', 
                       'Average spectra is not fitted or changes were made after last fit')
             return 1
         
         params = self.createMapParams()
-        numPeaks = int((len(params) - 2) / 3)
+        numPeaks = self.fitBands.getLength()
         
+        # Activate the progress bar in Status Frame to show progress to user 
+        # and avoid panic
         progressStep = 300 / (self.window.maps.length() * self.window.maps[0].spectraNum)
         self.window.statFrame.progressLabel.config(text = 'Processing:   Fitting spectra')
         
         for map in self.window.maps:
             
+            # Load map data to memory
             mapData = self.window.readMap(map)
             
             os.chdir(map.directory)
             
+            # Create relevant directories
             os.makedirs(f'{map.orig}_Files/Fits', exist_ok = True)
             os.makedirs(f'{map.orig}_Files/Fits/Reports', exist_ok = True)
             os.makedirs(f'{map.orig}_Files/Fits/Heatmaps', exist_ok = True)
             if self.varChkFitFig.get():
+                # Only create this if the user wants the fit figures
                 os.makedirs(f'{map.orig}_Files/Fits/Figures', exist_ok = True)
                     
-            frequencies = mapData['freq']
+            frequencies = mapData.pop('freq')
+            # dict to save the peak intensities for heatmaps
             mapIntensities = {}
             
-            for key in mapData:
-                if key == 'freq':
-                    continue
+            for key, intensity in mapData.items():
                 
+                # Perform minimization
                 minner = Minimizer(self.cost, params, 
-                                   fcn_args = (mapData[key], frequencies))
+                                   fcn_args = (intensity, frequencies))
                 result = minner.minimize()
                 bestParams = result.params
                 
-                self.writeFitSpectra(bestParams, mapData['freq'], mapData[key], key, map)
+                # Write the result to files 
+                self.writeFitSpectra(bestParams, frequencies, intensity, key, map)
                 self.writeFitReport(result, key, map)
                 
                 spectraInts = []
-                numPeaks = int((len(params)-2)/3)
+
                 v = bestParams.valuesdict()
-                
+                # Extract the intensity value for each peak and append it to mapIntensities
                 for peak in range(numPeaks):
                     spectraInts.append(round(v[f'h{peak}'], 2))
                 
                 mapIntensities[key] = spectraInts
                 
+                # Update progress bar
                 self.window.statFrame.progressBar['value'] += progressStep
                 self.window.statFrame.update_idletasks()
             
+            # Write the heatmap files for each peak and update progress bar
             self.writeHeatmaps(mapIntensities, map)
             self.window.statFrame.progressBar['value'] += progressStep
             self.window.statFrame.update_idletasks()
         
+        # Reset progress bar
         self.window.statFrame.progressBar['value'] = 0
         self.window.statFrame.progressLabel.config(text = 'Processing: ')
         
+        # Log process
         self.window.insertLog('fitMap')
         
+        # Inform process finalization to user
         showinfo('Information', 
                  'Maps fitted successfully')
         
+        # Update Bands and FitBaseline objects to show all changes saved
         self.fitBands.saveChanges()
         self.fitBase.allChangesSaved = True
         return 0
             
-    def writeHeatmaps(self, mapIntensities, map):
+    def writeHeatmaps(self, mapIntensities: dict, map: Map):
+        ''' Write the heatmap files from the fit result.
+        A heatmap is a 2D representation of a 3D graph using color as a scale '''
         numPeaks = self.fitBands.getUsefulLength()
         
         os.chdir(f'{map.orig}_Files/Fits/Heatmaps')
         
+        # Write the file
         with open(f'{map.name}_heatmaps.txt', 'w') as newFile:
             newFile.write('X(um)\tY(um)')
             
             for peak in range(numPeaks):
                 newFile.write(f'\tI(B{peak})')
             
-            for key in mapIntensities:
+            for key, intensities in mapIntensities.items():
                 newFile.write('\n')
                 newFile.write(f'{key[0]}\t{key[1]}')
                 for peak in range(numPeaks):
-                    newFile.write(f'\t{mapIntensities[key][peak]}')
+                    newFile.write(f'\t{intensities[peak]}')
         
         os.chdir(map.directory)
         
+        # If the user wants, generate the figure for the saved heatmap
         if self.varChkSaveHeat.get():
             self.drawHeatFigure(mapIntensities, map)
+        return 0
     
-    def drawHeatFigure(self, mapIntensities, map):
+    def drawHeatFigure(self, mapIntensities: dict, map: Map):
         numPeaks = self.fitBands.getUsefulLength()
         
+        # Create the x and y points of the map.
+        # They generate the image that was scanned in the map
         x = np.array([])
         y = np.array([])
         for key in mapIntensities:
             x = np.append(x, key[0])
             y = np.append(y, key[1])
-            
+        
+        # Eliminate repeats and sort them
         x = np.sort(np.unique(x))
         y = np.sort(np.unique(y))
         
         os.chdir(f'{map.orig}_Files/Fits/Heatmaps')
         
         for peak in range(numPeaks):
+            # Add all the intensities for the given peak
             intensities = np.array([])
             for yValue in y:
                 for xValue in x:
                     intensities = np.append(intensities, mapIntensities[(xValue, yValue)][peak])
             
+            # Plot the heatmap in greyscale and save it
             fig, ax = plt.subplots()
             pc = ax.imshow(intensities.reshape(len(x), len(y)), 
                            aspect = 'auto', origin = 'lower',
@@ -570,24 +683,28 @@ class FitTab(ttk.Frame):
         return 0
     
     @staticmethod
-    def writeFitReport(fitResult, key, map):
+    def writeFitReport(fitResult: MinimizerResult, key: tuple, map: Map):
+        # Remove the decimal part if present to avoid file name corruption
         x = key[0].split('.')[0]
         y = key[1].split('.')[0]
         
         os.chdir(f'{map.orig}_Files/Fits/Reports')
         
+        # Write the fit report for this (x, y) point
         with open(f'{map.name}_X_{x}_Y_{y}.txt', 'w') as newFile:
             newFile.write(fit_report(fitResult))
         
         os.chdir(map.directory)
         return 0
         
-    def writeFitSpectra(self, params, frequencies, intensities, key, map): 
-        numPeaks = int((len(params) - 2) / 3)
+    def writeFitSpectra(self, params: Parameters, frequencies: list, intensities: list, key: tuple, map: Map): 
+        numPeaks = self.fitBands.getLength()
         v = params.valuesdict()
         
+        # Get the intensity values for the optimized model
         fit = self.calculateModel(params, frequencies)
         
+        # Remove decimal to avoid filename corruption
         x = key[0].split('.')[0]
         y = key[1].split('.')[0]
         
@@ -598,8 +715,10 @@ class FitTab(ttk.Frame):
             
             bandFit = {}
             for peak in range(numPeaks):
+                # For each peak add an intensitity column header
                 newFile.write(f'\tInt(B{peak})')
                 
+                # And add the intensity of a fit containing a single band
                 bandParams = Parameters()
                 bandParams.add('offset', value = v['offset'])
                 bandParams.add('slope', value = v['slope'])
@@ -611,6 +730,8 @@ class FitTab(ttk.Frame):
                 
             newFile.write('\n')
             
+            # Write the values for frequency, intensity data, fit data, baseline,
+            # and the intensity of each single band
             for index, freq in enumerate(frequencies):
                 newFile.write(f'{freq:.2f}\t{intensities[index]:.2f}\t{fit[index]:.2f}\t')
                 newFile.write(f'{freq * v["slope"] + v["offset"]:.2f}')
@@ -622,7 +743,9 @@ class FitTab(ttk.Frame):
         os.chdir(map.directory)
         
         if self.varChkFitFig.get():
+            # If selected by user, generate the fit figures
             self.drawFitFigure(frequencies, intensities, key, fit, bandFit, params, map)
+        return 0
     
     @staticmethod
     def drawFitFigure(frequencies, intensities, key, fit, bandFit, params, map):

@@ -6,25 +6,35 @@ from tkinter.messagebox import showinfo, askyesno
 from tkinter import StringVar, BooleanVar, Label, Entry, Button
 
 class ShiftTab(Frame):
-    def __init__(self, master: Notebook):
-        super().__init__(master)
-        self.master = master
-        self.window = master.master
+    ''' Contains all variables and widgets of the Shift Spectra Tab '''
+    def __init__(self, notebook: Notebook):
+        super().__init__(notebook)
+        self.notebook = notebook
+        self.window = notebook.window
+
+        # Variables of data and reference to perform shift
         self.actual = StringVar(value = ''), StringVar(value = '')
         self.reference = StringVar(value = ''), StringVar(value = '')
+
         self.selectOn = BooleanVar(value = False)
         self.configureLayout()
         self.allChangesSaved = True
         
+        # Trace the reference variables to detect unsaved changes
         self.reference[0].trace('w', self.changeMade)
         self.reference[1].trace('w', self.changeMade)
+        return 0
     
     def clearTab(self):
+        ''' Reinitialize tab '''
         self.initPoints()
         self.selectOn.set(False)
         self.allChangesSaved = True
+        return 0
     
     def discardChanges(self):
+        ''' Upon a tab change, checks for unsaved changes. If present,
+        asks for confirmation. '''
         if self.allChangesSaved:
             return True
         
@@ -34,20 +44,26 @@ class ShiftTab(Frame):
         else:
             return False
     
-    def changeMade(self, x, y, z):
+    def changeMade(self, name, index, trigger):
+        ''' Function triggered everytime a reference variable is changed '''
         self.allChangesSaved = False
+        return 0
     
     def initPoints(self):
+        ''' Initialize real and reference points' variables '''
         self.actual[0].set('') 
         self.actual[1].set('') 
         self.reference[0].set('') 
-        self.reference[1].set('') 
+        self.reference[1].set('')
+        return 0
     
     def configureLayout(self):
+        ''' Configure tab's widget layout '''
         Label(self, text = 'Selected point').grid(column = 0, columnspan = 2, row = 4)
         Label(self, text = 'X').grid(column = 0,  row = 5)
         Label(self, text = 'Y').grid(column = 1,  row = 5)
         
+        # Read-only entries for the actual selected data point
         self.entry_actualX = Entry(self, textvariable = self.actual[0], width = 10)
         self.entry_actualX.grid(column = 0, row = 6)
         self.entry_actualX.config(state = 'readonly')
@@ -59,7 +75,8 @@ class ShiftTab(Frame):
         Label(self, text = 'Reference point').grid(column = 0, columnspan = 2, row = 7)
         Label(self, text = 'X').grid(column = 0,  row = 8)
         Label(self, text = 'Y').grid(column = 1,  row = 8)
-        
+
+        # Regular entries to change the actual selectes point to a reference  
         self.entry_refX = Entry(self, textvariable = self.reference[0], width = 10,
                                 validate = 'all', validatecommand = (self.register(self.isNumber), '%P'))
         self.entry_refX.grid(column = 0, row = 9)
@@ -68,6 +85,7 @@ class ShiftTab(Frame):
                                 validate = 'all', validatecommand = (self.register(self.isNumber), '%P'))
         self.entry_refY.grid(column = 1, row = 9)
         
+        # Buttons
         self.btnSelectXY = Button(self, text = 'Select', command = self.selectXY)
         self.btnSelectXY.grid(column = 2, row = 5, rowspan = 2, sticky ='sw')
         
@@ -75,6 +93,7 @@ class ShiftTab(Frame):
         self.btnApplyShift.grid(column = 2, row = 8, rowspan = 2, sticky ='sw')
     
     def selectXY(self):
+        ''' Change selection status and change button color to reflect it '''
         if self.window.maps.isEmpty():
             return 1
     
@@ -86,9 +105,11 @@ class ShiftTab(Frame):
     
     @staticmethod
     def isNumber(s):
+        ''' For Entry input validation '''
         return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == '' 
 
-    def handleMouseEvent(self, x, y):
+    def handleMouseEvent(self, x: float, y: float):
+        ''' Function triggered upon a mouse event on the plot, when the Shift tab is active. '''
         if not self.selectOn.get():
             return 1
         self.actual[0].set(f'{x:.2f}')

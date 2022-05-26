@@ -47,6 +47,7 @@ class GUI(Tk):
                 self.destroy()
             except:
                 self.quit()
+        return 0
     
     def resetGUI(self):
         ''' Clears all program variables '''
@@ -56,6 +57,7 @@ class GUI(Tk):
         self.varSelectedMap.set('')
         self.cleanAll()
     
+        # Remove all files from temp folder
         for file in os.listdir(TEMP_PATH):
             os.remove(TEMP_PATH + '/' + file)
 

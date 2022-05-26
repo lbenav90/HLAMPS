@@ -11,7 +11,7 @@ from Averages import Averages
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import askyesno, showinfo
 from settings import TEMP_PATH, LOGS, IMAGES, ABOUT_TITLE, ABOUT_TEXT
-from tkinter import Tk, BooleanVar, StringVar, END, Menu, Toplevel, Label, Entry, Button
+from tkinter import Tk, BooleanVar, StringVar, Menu, Toplevel, Label, Entry, Button
 
 class GUI(Tk):
     ''' Graphical User Interface Class - Defines all top level elements and methods '''
@@ -60,7 +60,6 @@ class GUI(Tk):
         # Remove all files from temp folder
         for file in os.listdir(TEMP_PATH):
             os.remove(TEMP_PATH + '/' + file)
-
         return 0
     
     def openMaps(self):
@@ -177,7 +176,7 @@ class GUI(Tk):
         return aliases
 
     def openAbout(self):
-        ''' Opens a window with a brief program description and full name'''
+        ''' Opens a window with a brief program description and full name '''
         aboutWindow = Toplevel()
         aboutWindow.title('About HLAMPS')
         aboutWindow.iconbitmap(rf'{IMAGES}/main.ico')
@@ -228,7 +227,7 @@ class GUI(Tk):
         if self.maps.isEmpty():
             return 1
         
-        # For potentially long processes, a progress bar is displayed
+        # For potentially long processes, the progress bar in the Status Frame is used to avoid user panic
         progressStep = 300 / (self.maps.length() * self.maps[0].spectraNum)
         self.statFrame.progressLabel.config(text = 'Processing:   Saving individual spectra')
         
@@ -246,14 +245,24 @@ class GUI(Tk):
             frequencies = mapData.pop('freq')
             
             # For each key, write a new file
-            for key in mapData:
-                x = key[0].split('.')[0] 
-                y = key[1].split('.')[0]
+            for key, intensities in mapData.values():
+                # Remove decimal to avoid filename corruption
+                x = key[0].replace('.', '')
+                y = key[1].replace('.', '')
+
+                # Save the number of decimals for the filename
+                if '.' in key[0]:
+                    xDec = len(key[0]) - key[0].index('.') - 1
+                else:
+                    xDec = 0
                 
-                with open(f'{map.name}_X_{x}_Y_{y}.txt', 'w') as file:
-                    file.write('Wavenumber(cm-1)\tIntensity\n')
-                    
-                    intensities = mapData[key]   
+                if '.' in key[1]:
+                    yDec = len(key[1]) - key[1].index('.') - 1
+                else:
+                    yDec = 0
+                
+                with open(f'{map.name}_X_{x}_E-{xDec}_Y_{y}_E-{yDec}.txt', 'w') as file:
+                    file.write('Wavenumber(cm-1)\tIntensity\n')   
                     
                     for freq, inten in zip(frequencies, intensities):
                         file.write(f'{freq:.2f}\t{inten:.2f}\n')
@@ -279,12 +288,11 @@ class GUI(Tk):
         if self.maps.isEmpty():
             return 2
         
-        # This prevents a double call when the users declines confirmation
+        # This prevents a double call when the user declines confirmation further on
         if self.reversingTabChange:
             self.reversingTabChange = False
             return 2            
-        
-        
+           
         currentTab = self.tabNotebook.activeTab()
         
         # For the unique call from openMaps method
@@ -312,8 +320,9 @@ class GUI(Tk):
     
     def insertLog(self, logType): 
         ''' Inserts log text into the StatFrame.logText ScrolledText widget '''
+        # Make the widget writable, write and then make it read-only again
         self.statFrame.logText.config(state = 'normal')
-        self.statFrame.logText.insert(END, 
+        self.statFrame.logText.insert('end', 
                                       time.ctime(time.time()).split()[3] + 
                                       ' ' + LOGS[logType] + '\n')
         self.statFrame.logText.config(state = 'disabled')
@@ -346,11 +355,10 @@ class GUI(Tk):
         return mapData
     
     def writeMap(self, map: Map, mapData: dict = None):
-        '''
-        For a Map class instance, it writes the map data for it in the temp foldes.
+        ''' For a Map class instance, it writes the map data for it in the temp foldes.
         If mapData(dict) is given, it also writes the new data in the original folder, 
-        with the current Map.name 
-        '''
+        with the current Map.name '''
+
         fnTemp = f'{TEMP_PATH}/{map.orig}.txt'
         
         # If mapData is not given, only update temp file
@@ -454,6 +462,7 @@ class GUI(Tk):
 
         menubar.add_cascade(label = 'File', menu = filemenu)
         self.config(menu = menubar)
+        return 0
     
     def configFrames(self):
         ''' Configures the main program Frames '''
@@ -461,6 +470,7 @@ class GUI(Tk):
         self.legFrame = LegFrame(self)
         self.statFrame = StatFrame(self)
         self.tabNotebook = TabNotebook(self)
+        return 0
     
     def cleanAll(self):
         ''' Calls the clean() method for each Frame'''
@@ -468,6 +478,7 @@ class GUI(Tk):
         self.legFrame.clean()
         self.statFrame.clean()
         self.tabNotebook.clean()
+        return 0
     
 if __name__ == '__main__':
     gui = GUI()

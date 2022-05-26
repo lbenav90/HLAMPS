@@ -33,7 +33,7 @@ class Band:
         self.intFixChk = Checkbutton(frame)
         
         # Were the parameters changed from the last average spectra fit
-        self.unchangedFromLastFit = True
+        self.unchangedFromLastFit = False
         
         self.allChangesSaved = True
     

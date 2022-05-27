@@ -240,9 +240,9 @@ class FitTab(ttk.Frame):
         self.fitBase.select.set(False)
         
         # Change button color to represent selection
-        self.btnSelectBand.config(bg = '#95CCD9')
-        
         self.fitBands.changeCollecting()
+        self.btnSelectBand.config(bg = '#95CCD9' * self.fitBands.collecting()
+                                     + '#f0f0f0' * (not self.fitBands.collecting()))
         return 0
     
     def calculateModel(self, params: Parameters, x: list):
@@ -280,7 +280,7 @@ class FitTab(ttk.Frame):
         ''' bandCreate is a dict returned from .bandDict() method in Bandas class, each value a Band element.
         If it is not given, the function uses all Band elements from Bands element. 
         It allows for a specific Band element dict as input to use the same function to plot individual peaks '''
-        # If it is not given, use all Band elements
+        # If it is not given, use all non empty Band elements
         if bandCreate == {}: bandCreate = self.fitBands.bandDict() 
         
         params = Parameters()
@@ -291,22 +291,20 @@ class FitTab(ttk.Frame):
         params.add('slope', value = float(self.fitBase.getSlope()), 
                    vary = not self.fitBase.fixSlope.get())
         
-        for bandNum, band in enumerate(bandCreate):
+        for bandNum, band in enumerate(bandCreate.values()):
             bandName = f'B{bandNum}'
 
-            # If the band is collected, add the parameters
-            if band.collected:
-                params.add(f'x{bandNum}', 
-                           value = float(band.getPos()), 
-                           vary = not band.getFixes(0), 
-                           min = self.window.plotFrame.figure.getLimits()[1].getXLim()[0], 
-                           max = self.window.plotFrame.figure.getLimits()[1].getXLim()[1])
-                params.add(f'd{bandNum}', 
-                           value = float(band.getDec()), 
-                           vary = not band.getFixes(1), min = 0)
-                params.add(f'h{bandNum}', 
-                           value = float(band.getInt()), 
-                           vary = not band.getFixes(2), min = 0)
+            params.add(f'x{bandNum}', 
+                        value = float(band.getPos()), 
+                        vary = not band.getFixes(0), 
+                        min = self.window.plotFrame.figure.getLimits()[1].getXLim()[0], 
+                        max = self.window.plotFrame.figure.getLimits()[1].getXLim()[1])
+            params.add(f'd{bandNum}', 
+                        value = float(band.getDec()), 
+                        vary = not band.getFixes(1), min = 0)
+            params.add(f'h{bandNum}', 
+                        value = float(band.getInt()), 
+                        vary = not band.getFixes(2), min = 0)
 
         return params
     
@@ -445,9 +443,9 @@ class FitTab(ttk.Frame):
         self.fitBase.setSlope(f'{v["slope"]:.3f}')
         
         for peak in range(numPeaks):
-            self.fitBands.band(f'B{peak}').setPos(round(v[f'x{peak}'], 2))
-            self.fitBands.band(f'B{peak}').setDec(round(v[f'd{peak}'], 2))
-            self.fitBands.band(f'B{peak}').setInt(round(v[f'h{peak}'], 2))
+            self.fitBands[f'B{peak}'].setPos(round(v[f'x{peak}'], 2))
+            self.fitBands[f'B{peak}'].setDec(round(v[f'd{peak}'], 2))
+            self.fitBands[f'B{peak}'].setInt(round(v[f'h{peak}'], 2))
         
         # Display optimized result
         self.displaySpectra()
@@ -683,14 +681,25 @@ class FitTab(ttk.Frame):
     
     @staticmethod
     def writeFitReport(fitResult, key: tuple, map: Map):
-        # Remove the decimal part if present to avoid file name corruption
-        x = key[0].split('.')[0]
-        y = key[1].split('.')[0]
+        # Remove decimal to avoid filename corruption
+        x = key[0].replace('.', '')
+        y = key[1].replace('.', '')
+
+        # Save the number of decimals for the filename
+        if '.' in key[0]:
+            xDec = len(key[0]) - key[0].index('.') - 1
+        else:
+            xDec = 0
+        
+        if '.' in key[1]:
+            yDec = len(key[1]) - key[1].index('.') - 1
+        else:
+            yDec = 0
         
         os.chdir(f'{map.orig}_Files/Fits/Reports')
         
         # Write the fit report for this (x, y) point
-        with open(f'{map.name}_X_{x}_Y_{y}.txt', 'w') as newFile:
+        with open(f'{map.name}_X_{x}_E-{xDec}_Y_{y}_E-{yDec}.txt', 'w') as newFile:
             newFile.write(fit_report(fitResult))
         
         os.chdir(map.directory)
@@ -702,14 +711,25 @@ class FitTab(ttk.Frame):
         
         # Get the intensity values for the optimized model
         fit = self.calculateModel(params, frequencies)
+
+        os.chdir(f'{map.orig}_Files/Fits')
         
         # Remove decimal to avoid filename corruption
-        x = key[0].split('.')[0]
-        y = key[1].split('.')[0]
+        x = key[0].replace('.', '')
+        y = key[1].replace('.', '')
+
+        # Save the number of decimals for the filename
+        if '.' in key[0]:
+            xDec = len(key[0]) - key[0].index('.') - 1
+        else:
+            xDec = 0
         
-        os.chdir(f'{map.orig}_Files/Fits')
+        if '.' in key[1]:
+            yDec = len(key[1]) - key[1].index('.') - 1
+        else:
+            yDec = 0
                 
-        with open(f'{map.name}_X_{x}_Y_{y}.txt', 'w') as newFile:
+        with open(f'{map.name}_X_{x}_E-{xDec}_Y_{y}_E-{yDec}.txt', 'w') as newFile:
             newFile.write('Wavenumber(cm-1)\tIntData\tInt(FitTotal)\tInt(Baseline)')
             
             bandFit = {}
@@ -817,19 +837,20 @@ class FitTab(ttk.Frame):
             if col != selectedMapIndex:
                 continue
             
+            # Only plot if there are collected Band elements
+            offset = self.fitBase.getOffset()
+            slope = self.fitBase.getSlope()
+            if slope != '' and offset != '':
+                spectraBase = np.array(spectra[1][0]) * float(slope) + float(offset )
+                            
+                plot.plot(spectra[1][0], spectraBase, c = '#444444')
+
             # If there are collected Band elements, ensure that no baseline parameters are undefined
             if self.fitBands.getUsefulLength() != 0:
                 if self.fitBase.getOffset() == '':
                     self.fitBase.setOffset('0.0')
                 if self.fitBase.getSlope() == '':
                     self.fitBase.setSlope('0.0')
-            
-                # Only plot if there are collected Band elements
-                offset = float(self.fitBase.getOffset())
-                slope = float(self.fitBase.getSlope())
-                spectraBase = np.array(spectra[1][0]) * slope + offset 
-                            
-                plot.plot(spectra[1][0], spectraBase, c = '#444444')
                 
                 fitParams = self.createGuideParams()
                 
@@ -839,7 +860,7 @@ class FitTab(ttk.Frame):
                 plot.plot(spectra[1][0], spectraFit, c = '#191919')
                 
                 #Plot each individal Band elements
-                for band in self.fitBands:
+                for band in self.fitBands.bandDict().values():
                     bandParams = self.createGuideParams({'B0': band})
                     bandFit = self.calculateModel(bandParams, spectra[1][0])
                     plot.plot(spectra[1][0], bandFit, alpha = 0.5) 
@@ -871,7 +892,6 @@ class FitTab(ttk.Frame):
             # If fit baseline collection is ON, add a reference point to FitBaseline element
             if self.fitBase.addReference(x, y):
                 # addReference method returns True if all 2 reference points were gathered and collection is finished
-                self.fitBase.changeSelect()
                 self.displaySpectra()
                 
         return 0

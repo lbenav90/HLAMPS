@@ -27,6 +27,7 @@ class TabNotebook(Notebook):
                   row = 2, sticky = 'news')
         
         self.update_idletasks()
+        return 0
     
     def configureActive(self):
         ''' Sets the self.active dictionary. This allows to keep a memory 
@@ -36,6 +37,7 @@ class TabNotebook(Notebook):
         self.active['Cut spectra'] = [2, False]
         self.active['Subtract baseline'] = [3, False]
         self.active['Fit spectra'] = [4, False]
+        return 0
         
     def setActive(self, tabText):
         ''' Sets the active tab on self.active '''
@@ -56,7 +58,7 @@ class TabNotebook(Notebook):
             tab.clearTab()
     
     def configureTabs(self):
-        ''' COnfigures th tabs'''
+        ''' Configures the tabs'''
         self.allTabs = Tabs(StartTab(self),
                             ShiftTab(self),
                             CutTab(self),

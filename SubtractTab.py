@@ -251,6 +251,10 @@ class SubtractTab(ttk.Frame):
 
     def saveSubFigures(self, key: tuple, map: Map, frequencies: list, intensities: list, yAnchors: np.ndarray, yBase: np.ndarray): 
 
+        os.chdir(map.directory)
+
+        os.makedirs(f'{map.orig}_Files/Figures/Subtracted', exist_ok = True)
+        
         os.chdir(f'{map.orig}_Files/Figures/Subtracted')
         
         fig = plt.Figure()

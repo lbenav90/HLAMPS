@@ -147,10 +147,10 @@ class ShiftTab(Frame):
             
             # Add a suffix to filename to denote the change, but only once
             if '_shifted' not in map.name:
-                name = map.name + '_shifted'
+                map.name += '_shifted'
             
             shiftedData = {}
-            for key, intensities in mapData.values():                
+            for key, intensities in mapData.items():                
                 if key == 'freq':
                     shiftedData[key] = list(np.array(intensities) + shiftX)
                 else:
@@ -159,10 +159,9 @@ class ShiftTab(Frame):
                 #Update progress bar
                 self.window.statFrame.progressBar['value'] += progressStep
                 self.window.statFrame.update_idletasks()
-            map.name = name
             
             # Write the resulting map to temp folder and corresponding directory
-            self.window.writeMap(map, mapData)
+            self.window.writeMap(map, shiftedData)
         
         # Reset progress bar
         self.window.statFrame.progressBar['value'] = 0

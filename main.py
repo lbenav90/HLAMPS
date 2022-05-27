@@ -407,7 +407,7 @@ class GUI(Tk):
         
         # Convert event y value into an intensity corresponding with the data
         y = event.y - bounds.y0 * int(self.winfo_height() * 0.65)
-        y /= int(self.winfo_width() * 0.65) * (bounds.y1 - bounds.y0)
+        y /= int(self.winfo_height() * 0.65) * (bounds.y1 - bounds.y0)
         y *= limits.getYLim()[1] - limits.getYLim()[0]
         y += limits.getYLim()[0]
         
@@ -431,7 +431,7 @@ class GUI(Tk):
             frequencies = mapData.pop('freq')
             
             # Add all the intensity lists for (x, y) keys from mapData
-            sumSpectra = np.zeros(len(mapData['freq']))
+            sumSpectra = np.zeros(len(frequencies))
             for key in mapData:
                 sumSpectra += np.array(mapData[key])
             

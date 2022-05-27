@@ -25,7 +25,6 @@ class FitTab(ttk.Frame):
         self.varChkInstructions = BooleanVar(value = False)
 
         self.configureLayout()
-        return 0
     
     def clearTab(self):
         ''' Reinitialize tab '''

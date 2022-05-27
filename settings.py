@@ -1,8 +1,9 @@
 import os
 
-# Directory where the main.py script is located
-INSTALL_DIR = 'C:/Users/Lean/Desktop/LeanPipsi'
+# Directory where the main.py and setting.py scripts is located
+INSTALL_DIR = os.getcwd()
 
+os.chdir(INSTALL_DIR)
 TEMP_PATH = f'{INSTALL_DIR}/temp'
 os.makedirs(TEMP_PATH, exist_ok = True)
 

@@ -121,49 +121,64 @@ class ShiftTab(Frame):
         return 0
     
     def applyShift(self):
+        ''' Apply the shift to the actual reference points, saving the shifted Map elements '''
         if self.window.maps.isEmpty():
             return 1
         
+        # If selection is ON, turn OFF
         if self.selectOn.get(): self.selectXY() 
             
+        # Define shifts
         shiftX = float(self.reference[0].get()) - float(self.actual[0].get())
         shiftY = float(self.reference[1].get()) - float(self.actual[1].get())
         
+        # Set the actual data point to the reference to show the shift
         self.actual[0].set(self.reference[0].get())
         self.actual[1].set(self.reference[1].get())
         
+        # For potentially long processes, the progress bar in the Status Frame is used
         progressStep = 300 / (self.window.maps.length() * self.window.maps[0].spectraNum)
         self.window.statFrame.progressLabel.config(text = 'Processing:   Saving shifted maps')
         
         for map in self.window.maps:
             os.chdir(map.directory)
             
+            #Get the map data as a dict
             mapData = self.window.readMap(map)
             
+            # Add a suffix to filename to denote the change, but only once
             if '_shifted' not in map.name:
                 name = map.name + '_shifted'
             
-            for key in mapData:
+            shiftedData = {}
+            for key, intensities in mapData.values():                
+                if key == 'freq':
+                    shiftedData[key] = list(np.array(intensities) + shiftX)
+                else:
+                    shiftedData[key] = list(np.array(intensities) + shiftY)       
+                
+                #Update progress bar
                 self.window.statFrame.progressBar['value'] += progressStep
                 self.window.statFrame.update_idletasks()
-                
-                if key == 'freq':
-                    mapData[key] = list(np.array(mapData[key]) + shiftX)
-                else:
-                    mapData[key] = list(np.array(mapData[key]) + shiftY)       
             map.name = name
             
+            # Write the resulting map to temp folder and corresponding directory
             self.window.writeMap(map, mapData)
         
+        # Reset progress bar
         self.window.statFrame.progressBar['value'] = 0
         self.window.statFrame.progressLabel.config(text = 'Processing: ')
         
+        # Update legend in Legend Frame
         self.window.legFrame.updateLegend()
         
+        # Reinitialize actual and reference points
         self.initPoints()
         
+        # Display new spectra
         self.displaySpectra()
         
+        # Log process
         self.window.insertLog('shift')
         
         showinfo(title = 'Save',  message = 'Shifted maps saved successfully')
@@ -171,28 +186,34 @@ class ShiftTab(Frame):
         self.allChangesSaved = True
         return 0
     
-    def displaySpectra(self, window = None):
+    def displaySpectra(self, window: Tk = None):
+        ''' Display current average spectra with the Tab specific plots. '''
         if window is None:
-            window = self.master.master
+            window = self.window
         
         if window.maps.isEmpty():
             return 1
         
+        # Get current average spectra
         window.getAverageSpectra()
         
+        # Reinitialize plot
         plot = window.plotFrame.figure.reInitPlot()
         
         for col, spectra in window.averages.enumerate():  
+            # Plot all average spectra
             plot.plot(spectra[1][0],spectra[1][1], 
                       color = COLORS[col % len(COLORS)])
         
+        # If an actual data point was selected, plot it with a big X
         if self.actual[0].get() != '':
             plot.plot(float(self.actual[0].get()), 
                       float(self.actual[1].get()), 'kx', markersize = 20)
 
+        # Save new limits
         window.plotFrame.figure.saveLimits()
         window.plotFrame.figure.drawCanvas()
         
+        # Update Status Frame
         self.window.statFrame.getLimits()
-        
         return 0

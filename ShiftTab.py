@@ -3,7 +3,7 @@ import numpy as np
 from settings import TEMP_PATH, COLORS
 from tkinter.ttk import Frame, Notebook
 from tkinter.messagebox import showinfo, askyesno
-from tkinter import StringVar, BooleanVar, Label, Entry, Button
+from tkinter import Tk, StringVar, BooleanVar, Label, Entry, Button
 
 class ShiftTab(Frame):
     ''' Contains all variables and widgets of the Shift Spectra Tab '''

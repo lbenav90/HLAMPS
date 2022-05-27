@@ -28,7 +28,6 @@ class SubtractTab(ttk.Frame):
 
         self.configureLayout()
         self.allChangesSaved = True
-        return 0
     
     def clearTab(self):
         ''' Reinitialize tab '''

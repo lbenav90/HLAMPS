@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from idlelib.tooltip import Hovertip
 from Bands import Band, Bands, FitBaseline
 from tkinter.filedialog import askopenfilename
-from lmfit import Parameters, Minimizer, fit_report, MinimizerResult
+from lmfit import Parameters, Minimizer, fit_report
 from tkinter.messagebox import showinfo, showwarning, askyesno, showerror
 from tkinter import Tk, ttk, StringVar, BooleanVar, Canvas, Frame, Label, Button, Checkbutton
 
@@ -480,7 +480,7 @@ class FitTab(ttk.Frame):
             self.displaySpectra()
             return 1
     
-    def saveFitParameters(self, mapIndex: int, result: MinimizerResult):
+    def saveFitParameters(self, mapIndex: int, result):
         ''' Save the accepted fit parameters to a file for future reference and import. 
         For each of the currently analyzed maps, write a fit_report output in each folder. '''
         for map in self.window.maps:
@@ -683,7 +683,7 @@ class FitTab(ttk.Frame):
         return 0
     
     @staticmethod
-    def writeFitReport(fitResult: MinimizerResult, key: tuple, map: Map):
+    def writeFitReport(fitResult, key: tuple, map: Map):
         # Remove the decimal part if present to avoid file name corruption
         x = key[0].split('.')[0]
         y = key[1].split('.')[0]

@@ -27,7 +27,6 @@ class TabNotebook(Notebook):
                   row = 2, sticky = 'news')
         
         self.update_idletasks()
-        return 0
     
     def configureActive(self):
         ''' Sets the self.active dictionary. This allows to keep a memory 

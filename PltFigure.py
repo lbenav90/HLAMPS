@@ -22,7 +22,6 @@ class PltFigure(plt.Figure):
         self.canvas.mpl_connect('button_press_event', window.mouseEvent)
         
         self.initPlot()
-        return 0
     
     def initPlot(self, data: list = None):
         ''' Initialize an empty plot '''

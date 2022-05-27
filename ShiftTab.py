@@ -23,7 +23,6 @@ class ShiftTab(Frame):
         # Trace the reference variables to detect unsaved changes
         self.reference[0].trace('w', self.changeMade)
         self.reference[1].trace('w', self.changeMade)
-        return 0
     
     def clearTab(self):
         ''' Reinitialize tab '''

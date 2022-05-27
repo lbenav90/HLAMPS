@@ -20,7 +20,6 @@ class StatFrame(Frame):
         # Get current limits
         self.getLimits()
         self.configureLayout()
-        return 0
     
     def clean(self):
         ''' Reinitialize tab. Assumes prior clearing of plot frame'''
@@ -78,16 +77,16 @@ class StatFrame(Frame):
         
         # Entries with input validation for changing limits
         Entry(self, textvariable = self.xmin, width = 10, validate = 'all', 
-              validatecommand = (self.frame.register(self.isNumber), '%P')
+              validatecommand = (self.register(self.isNumber), '%P')
               ).grid(column = 7, row = 2, sticky = 'nw')
         Entry(self, textvariable = self.xmax, width = 10, validate = 'all', 
-              validatecommand = (self.frame.register(self.isNumber), '%P')
+              validatecommand = (self.register(self.isNumber), '%P')
               ).grid(column = 7, row = 3, sticky = 'nw')
         Entry(self, textvariable = self.ymin, width = 10, validate = 'all', 
-              validatecommand = (self.frame.register(self.isNumber), '%P')
+              validatecommand = (self.register(self.isNumber), '%P')
               ).grid(column = 9, row = 2, sticky = 'nw')
         Entry(self, textvariable = self.ymax, width = 10, validate = 'all', 
-              validatecommand = (self.frame.register(self.isNumber), '%P')
+              validatecommand = (self.register(self.isNumber), '%P')
               ).grid(column = 9, row = 3, sticky = 'nw')
         
         # Buttons

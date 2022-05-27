@@ -20,7 +20,6 @@ class Band:
         self.intFix = BooleanVar(value = False)
         
         # All parameters are were collected
-        self.collected = False
         
         # Widgets for the Band
         self.radio = Radiobutton(frame)
@@ -43,6 +42,8 @@ class Band:
         self.position.trace('w', self.detectEntry)
         self.decay.trace('w', self.detectEntry)
         self.intensity.trace('w', self.detectEntry)
+
+        self.collected = False
         
     def getName(self):
         ''' Returns the name of the band '''
@@ -231,8 +232,12 @@ class Bands:
         return len(self.bands)
     
     def bandDict(self):
-        ''' Returns a copy of the Bands as a dict '''
-        return self.bands.copy()
+        ''' Returns a copy of the Bands as a dict of non empty Band elements'''
+        newDict = {}
+        for name, band in self.bands.items():
+            if band.collected:
+                newDict[name] = band
+        return newDict
     
     def __getitem__(self, name: str):
         ''' Returns a Band element on name input '''
@@ -282,7 +287,7 @@ class Bands:
             self.bands[band].addRadio(radioVar)
         return 0
     
-    def addReference(self, x, y, name):
+    def addReference(self, x: float, y: float, name: str):
         ''' Adds a new reference point while collecting Band parameters.
         If upon collection, references has 3 datapoints, it extracts the parameters.'''
         self.references.append([x, y])
@@ -292,7 +297,7 @@ class Bands:
         else:
             return False
     
-    def extractParameters(self, name):
+    def extractParameters(self, name: str):
         ''' Uses 3 reference points collected to calculate Band parameters '''
         band = self.bands[name]
         
@@ -377,7 +382,7 @@ class FitBaseline:
         self.slope.set(s)
         return 0
     
-    def addReference(self, x, y):
+    def addReference(self, x: float, y: float):
         ''' Add a reference point to temp list.
         If upon collection, the list has 2 points, extracts the baseline parameters.'''
         self.references.append([x, y])
@@ -407,8 +412,9 @@ class FitBaseline:
         ''' Changes baseline parameter collection status '''
         self.select.set(not self.select.get()) 
         # Change color of button to reflect status
-        self.defButton.config(bg = '#95CCD9' * self.select.get() + 
-                              '#f0f0f0' * (1 - self.select.get()))
+        self.defButton.config(bg = '#95CCD9' * self.select.get() 
+                                 + '#f0f0f0' * (not self.select.get()))
+
         return 0
     
     def extractParameters(self):
@@ -422,6 +428,7 @@ class FitBaseline:
         #Reinitialize 
         self.references.clear()
         self.changeSelect()
+        return 0
         
     @staticmethod
     def isNumber(s):

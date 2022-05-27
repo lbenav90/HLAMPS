@@ -10,10 +10,12 @@ from tkinter.messagebox import showinfo, askyesno, showerror
 from tkinter import Button, BooleanVar, Frame, Checkbutton, ttk
 
 class SubtractTab(ttk.Frame):
-    def __init__(self, master: ttk.Notebook):
-        super().__init__(master)
-        self.master = master
-        self.window = master.master ### GUI instance
+    def __init__(self, notebook: ttk.Notebook):
+        super().__init__(notebook)
+        self.master = notebook
+        self.window = notebook.window ### GUI instance
+
+        # Class instance that stores anchor points and its buttons
         self.anchors = Anchors()
         self.anchorBut = []
         self.showSub = BooleanVar(value = False)

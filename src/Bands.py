@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from idlelib.tooltip import Hovertip
+from Global_Functions import isNumber
 from tkinter import StringVar, BooleanVar, Radiobutton, Entry, Checkbutton, Label, Frame, Button
 
 class Band:
@@ -104,11 +105,6 @@ class Band:
         self.name = f'B{numBand}'
         return self
     
-    @staticmethod
-    def isNumber(s):
-        ''' Used to validate Entry widgets' input for ints, floats or empty strings'''
-        return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == ''
-    
     def destroy(self):
         ''' Destroys all band widgets '''
         self.label.destroy()
@@ -139,15 +135,15 @@ class Band:
         # Entrys with input validation for parameters
         self.posEntry = Entry(self.frame, textvariable = self.position, 
                               width = 10, validate = 'all', 
-                              validatecommand = (self.frame.register(self.isNumber), '%P'))
+                              validatecommand = (self.frame.register(isNumber), '%P'))
         
         self.decEntry = Entry(self.frame, textvariable = self.decay,
                               width = 10, validate = 'all', 
-                              validatecommand = (self.frame.register(self.isNumber), '%P'))
+                              validatecommand = (self.frame.register(isNumber), '%P'))
                         
         self.intEntry =  Entry(self.frame, textvariable = self.intensity, 
                                width = 10, validate = 'all', 
-                                validatecommand = (self.frame.register(self.isNumber), '%P'))
+                                validatecommand = (self.frame.register(isNumber), '%P'))
         
         self.posEntry.grid(column = 2 * int(self.name[1:]) + 1, row = 1)
         self.decEntry.grid(column = 2 * int(self.name[1:]) + 1, row = 2)
@@ -339,7 +335,7 @@ class FitBaseline:
         # Entrys with input validation for baseline parameters and checkbuttons for fix status
         self.offsetEntry = Entry(frame, textvariable = self.offset, 
                                  width = 10, validate = 'all', 
-                                 validatecommand = (frame.register(self.isNumber), '%P'))
+                                 validatecommand = (frame.register(isNumber), '%P'))
         self.offsetEntry.grid(column = 1, row = 2, sticky = 'w')
         
         self.offsetCheck = Checkbutton(frame, text = '', 
@@ -348,7 +344,7 @@ class FitBaseline:
         
         self.slopeEntry = Entry(frame, textvariable = self.slope, 
                                 width = 10,validate = 'all', 
-                                validatecommand = (frame.register(self.isNumber), '%P'))
+                                validatecommand = (frame.register(isNumber), '%P'))
         self.slopeEntry.grid(column = 1, row = 3, sticky = 'w')
         
         self.slopeCheck = Checkbutton(frame, text = '', 
@@ -429,8 +425,3 @@ class FitBaseline:
         self.references.clear()
         self.changeSelect()
         return 0
-        
-    @staticmethod
-    def isNumber(s):
-        ''' Input validation for Entry widgets '''
-        return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == ''

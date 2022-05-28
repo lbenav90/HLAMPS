@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from idlelib.tooltip import Hovertip
 from settings import TEMP_PATH, COLORS
 from tkinter.filedialog import askopenfilename
+from Global_Functions import findClosest, averageBox
 from tkinter.messagebox import showinfo, askyesno, showerror
 from tkinter import Tk, Button, BooleanVar, Frame, Checkbutton, ttk
 
@@ -110,37 +111,7 @@ class SubtractTab(ttk.Frame):
         Hovertip(self.chkSubOffset, 
                  'Shows subtracted averages with an offset for clarity', 
                  hover_delay = 1000)
-        return 0
-    
-    @staticmethod
-    def averageBox(values: list, index: int, box: int):
-        '''Values is a list of floats and the value of interest is at index. 
-        Averages values in the index intervals (index-box, index + box) excluding out of bounds '''
-        # Check if the interval is fully included in the values list, if not, defines limit indexes
-        if index - box < 0:
-            minIndex = None
-            maxIndex = index + box + 1
-        elif index + box >= len(values) - 1:
-            minIndex = index - box
-            maxIndex = None
-        else:
-            minIndex = index - box
-            maxIndex = index + box + 1
-
-        return sum(values[minIndex: maxIndex]) / len(values[minIndex: maxIndex])
-    
-    @staticmethod
-    def findClosest(interest: float, values: list):
-        ''' Given a valueof interest, finds the index for the nearest float in a list of value '''
-        # Set an arbitrarily large minimum difference
-        minDif = 1e9
-        minIndex = 0
-        for index, value in enumerate(values):
-            dif = abs(interest - value)
-            if dif < minDif:
-                minDif = dif
-                minIndex = index
-        return minIndex        
+        return 0      
     
     def subtractBaseline(self):
         ''' Subtract a linear baseline made by linear interpolation of anchor points contained in Anchors class object.
@@ -167,9 +138,7 @@ class SubtractTab(ttk.Frame):
             for key, intensities in mapData.items():
                 
                 # Get the intensity values for each frequency anchor point in Anchors object
-                yAnchors = [self.averageBox(intensities, 
-                                            self.findClosest(anchor, frequencies),
-                                                             3) for anchor in self.anchors]   
+                yAnchors = [averageBox(intensities, findClosest(anchor, frequencies), 3) for anchor in self.anchors]   
             
                 # Interpolate between anchor points in the range of frequencies
                 yBase = np.interp(frequencies, 
@@ -362,9 +331,8 @@ class SubtractTab(ttk.Frame):
         
         for map, spectra in self.window.averages:
             # Get the intensity value for each anchor value
-            yAnchors = [self.averageBox(spectra[1], 
-                                        self.findClosest(anchor, spectra[0]),
-                                                         3) for anchor in self.anchors]
+            yAnchors = [averageBox(spectra[1],findClosest(anchor, spectra[0]), 3) for anchor in self.anchors]
+
             # Create interpolation between anchors
             yBase = np.interp(spectra[0], self.anchors.asList(), yAnchors)
             
@@ -447,9 +415,7 @@ class SubtractTab(ttk.Frame):
            
             if not self.showSub.get():
                 # If it is not a showSubtracted method call, plot the anchor points and baseline 
-                yAnchors = [self.averageBox(spectra[1][1], 
-                                             self.findClosest(anchor, spectra[1][0]),
-                                                              3) for anchor in self.anchors]
+                yAnchors = [averageBox(spectra[1][1], findClosest(anchor, spectra[1][0]), 3) for anchor in self.anchors]
     
                 plot.plot(self.anchors.asList(), yAnchors, '#808080')
                 plot.plot(self.anchors.asList(), yAnchors, ' o', c = 'grey')

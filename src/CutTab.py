@@ -3,6 +3,7 @@ from functools import partial
 from idlelib.tooltip import Hovertip
 from tkinter.ttk import Frame, Notebook
 from settings import TEMP_PATH, COLORS, IMAGES
+from Global_Functions import isNumber, findClosest
 from tkinter.messagebox import showerror, askyesno, showinfo
 from tkinter import StringVar, BooleanVar, Label, Entry, PhotoImage, Button
 
@@ -61,12 +62,12 @@ class CutTab(Frame):
         
         # Entry widgets for new frequency limits
         self.initCut = Entry(self, textvariable = self.varInitCut, validate = 'all', 
-                             validatecommand = (self.register(self.isNumber), '%P'))
+                             validatecommand = (self.register(isNumber), '%P'))
         
         self.initCut.grid(column = 1, row = 0, sticky = 'W')
         
         self.finCut = Entry(self, textvariable = self.varFinCut, validate = 'all', 
-                            validatecommand = (self.register(self.isNumber), '%P'))
+                            validatecommand = (self.register(isNumber), '%P'))
         
         self.finCut.grid(column = 1, row = 1, sticky = 'W')
         
@@ -157,24 +158,7 @@ class CutTab(Frame):
         
         self.window.statFrame.getLimits()
         
-        return 0
-    
-    @staticmethod
-    def findClosest(value: float, samples: list):
-        ''' Finds the index of the closest element to value in the list sample. '''
-        minDif = 1e9
-        minIndex = 0
-        for index, sample in enumerate(samples):
-            dif = abs(value - sample)
-            if dif < minDif:
-                minDif = dif
-                minIndex = index
-        return minIndex
-    
-    @staticmethod
-    def isNumber(s):
-        ''' For input validation of Entry widgets. '''
-        return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == '' 
+        return 0 
     
     def selectLimits(self):
         ''' Changes the current data selection status. '''
@@ -224,8 +208,8 @@ class CutTab(Frame):
             
             # Define cut indexes if not defined
             if startIndex is None:
-                startIndex = self.findClosest(start, mapData['freq'])
-                endIndex = self.findClosest(end, mapData['freq']) + 1
+                startIndex = findClosest(start, mapData['freq'])
+                endIndex = findClosest(end, mapData['freq']) + 1
             
             # For each key in the map data, slice the value accoding to the indexes
             for key in mapData:
@@ -298,7 +282,7 @@ class CutTab(Frame):
         # Display limits in status Frame
         self.window.statFrame.getLimits()
 
-    def handleMouseEvent(self, x, y):
+    def handleMouseEvent(self, x: float, y: float):
         ''' Function triggered upon a mouse event on the plot, when the Cut tab is active. '''
         # If collection is OFF, return
         if not self.selectOn.get():

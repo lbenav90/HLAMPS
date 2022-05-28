@@ -1,4 +1,5 @@
 import time
+from Global_Functions import isNumber
 from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import Separator, Progressbar
 from tkinter import Tk, Frame, StringVar, Label, Entry, Button
@@ -7,8 +8,8 @@ class StatFrame(Frame):
     ''' Contains information about the status of the program. '''
     def __init__(self, window: Tk):
         super().__init__(window)
-        self.config({'width': window.winfo_width() - 700,
-                     'height': 200})
+        self.config({'width': int(window.winfo_width() * 0.45),
+                     'height': int(self.window.winfo_height() * 0.3)})
         
         self.grid(column = 1, row = 1, sticky = 'news')
         self.update_idletasks()
@@ -77,16 +78,16 @@ class StatFrame(Frame):
         
         # Entries with input validation for changing limits
         Entry(self, textvariable = self.xmin, width = 10, validate = 'all', 
-              validatecommand = (self.register(self.isNumber), '%P')
+              validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 7, row = 2, sticky = 'nw')
         Entry(self, textvariable = self.xmax, width = 10, validate = 'all', 
-              validatecommand = (self.register(self.isNumber), '%P')
+              validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 7, row = 3, sticky = 'nw')
         Entry(self, textvariable = self.ymin, width = 10, validate = 'all', 
-              validatecommand = (self.register(self.isNumber), '%P')
+              validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 9, row = 2, sticky = 'nw')
         Entry(self, textvariable = self.ymax, width = 10, validate = 'all', 
-              validatecommand = (self.register(self.isNumber), '%P')
+              validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 9, row = 3, sticky = 'nw')
         
         # Buttons
@@ -114,8 +115,4 @@ class StatFrame(Frame):
         self.logText.insert('end', time.ctime(time.time()).split()[3] + ' Initiated\n')
         self.logText.config(state = 'disabled')
         # Setup scrollable text Log
-
-    @staticmethod
-    def isNumber(s):
-        ''' Used to validate Entry widgets' input for ints, floats or empty strings'''
-        return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == ''
+        return 0

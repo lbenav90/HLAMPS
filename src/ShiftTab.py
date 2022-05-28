@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from Global_Functions import isNumber
 from settings import TEMP_PATH, COLORS
 from tkinter.ttk import Frame, Notebook
 from tkinter.messagebox import showinfo, askyesno
@@ -77,11 +78,11 @@ class ShiftTab(Frame):
 
         # Regular entries to change the actual selectes point to a reference  
         self.entry_refX = Entry(self, textvariable = self.reference[0], width = 10,
-                                validate = 'all', validatecommand = (self.register(self.isNumber), '%P'))
+                                validate = 'all', validatecommand = (self.register(isNumber), '%P'))
         self.entry_refX.grid(column = 0, row = 9)
         
         self.entry_refY = Entry(self, textvariable = self.reference[1], width = 10,
-                                validate = 'all', validatecommand = (self.register(self.isNumber), '%P'))
+                                validate = 'all', validatecommand = (self.register(isNumber), '%P'))
         self.entry_refY.grid(column = 1, row = 9)
         
         # Buttons
@@ -101,11 +102,6 @@ class ShiftTab(Frame):
         self.btnSelectXY.config(bg = '#f0f0f0' * (not self.selectOn.get()) 
                                    + '#95CCD9' *      self.selectOn.get())      
         return 0
-    
-    @staticmethod
-    def isNumber(s):
-        ''' For Entry input validation '''
-        return s.isdigit() or s.replace('.', '0', 1).isdigit() or s == '' 
 
     def handleMouseEvent(self, x: float, y: float):
         ''' Function triggered upon a mouse event on the plot, when the Shift tab is active. '''

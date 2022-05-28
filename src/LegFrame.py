@@ -8,8 +8,8 @@ class LegFrame(Frame):
     def __init__(self, window: Tk):
         super().__init__(window)
         self.window = window
-        self.config({'width': window.winfo_width() - 700,
-                     'height': 200})
+        self.config({'width': int(window.winfo_width() * 0.45),
+                     'height': int(self.window.winfo_height() * 0.35)})
         
         self.grid(column = 1, row = 0, sticky = 'news')
         

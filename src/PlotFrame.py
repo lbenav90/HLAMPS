@@ -1,5 +1,5 @@
 from tkinter import Tk, Frame
-from PltFigure import PltFigure
+from .PltFigure import PltFigure
 
 class PlotFrame(Frame):
     ''' Contains the matplotlib plot. All actions defered to PltFigure class. '''

@@ -1,8 +1,8 @@
-from StartTab import StartTab
-from ShiftTab import ShiftTab
-from CutTab import CutTab
-from SubtractTab import SubtractTab
-from FitTab import FitTab
+from .StartTab import StartTab
+from .ShiftTab import ShiftTab
+from .CutTab import CutTab
+from .SubtractTab import SubtractTab
+from .FitTab import FitTab
 from dataclasses import dataclass, field
 
 @dataclass

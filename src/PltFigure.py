@@ -1,4 +1,4 @@
-from Limits import Limits
+from .Limits import Limits
 from tkinter import Tk, Frame
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)

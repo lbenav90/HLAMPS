@@ -20,7 +20,7 @@ def calculateModel(params: Parameters, x: list):
     '''Uses params to create the model y data. Corresponds to a sum of Lorentzian peaks on a linear baseline
     - params: Contains Parameter instances to be used for the model
     - x: list of x values to be computed in the creation of the model'''
-    numPeaks = (len(params) - 2) / 3
+    numPeaks = int((len(params) - 2) / 3)
     
     # Create an empty array
     y = np.zeros(len(x))

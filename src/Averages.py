@@ -1,4 +1,4 @@
-from Maps import Map
+from .Maps import Map
 
 class Averages:
     ''' Contains average spectra for the current maps '''

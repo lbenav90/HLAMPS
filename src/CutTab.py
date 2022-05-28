@@ -3,7 +3,7 @@ from functools import partial
 from idlelib.tooltip import Hovertip
 from tkinter.ttk import Frame, Notebook
 from settings import TEMP_PATH, COLORS, IMAGES
-from Global_Functions import isNumber, findClosest
+from .Global_Functions import isNumber, findClosest
 from tkinter.messagebox import showerror, askyesno, showinfo
 from tkinter import StringVar, BooleanVar, Label, Entry, PhotoImage, Button
 

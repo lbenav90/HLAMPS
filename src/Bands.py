@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from idlelib.tooltip import Hovertip
-from Global_Functions import isNumber
+from .Global_Functions import isNumber
 from tkinter import StringVar, BooleanVar, Radiobutton, Entry, Checkbutton, Label, Frame, Button
 
 class Band:

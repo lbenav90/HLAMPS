@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from Global_Functions import isNumber
+from .Global_Functions import isNumber
 from settings import TEMP_PATH, COLORS
 from tkinter.ttk import Frame, Notebook
 from tkinter.messagebox import showinfo, askyesno

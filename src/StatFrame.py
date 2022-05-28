@@ -1,5 +1,5 @@
 import time
-from Global_Functions import isNumber
+from .Global_Functions import isNumber
 from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import Separator, Progressbar
 from tkinter import Tk, Frame, StringVar, Label, Entry, Button
@@ -9,7 +9,7 @@ class StatFrame(Frame):
     def __init__(self, window: Tk):
         super().__init__(window)
         self.config({'width': int(window.winfo_width() * 0.45),
-                     'height': int(self.window.winfo_height() * 0.3)})
+                     'height': int(window.winfo_height() * 0.3)})
         
         self.grid(column = 1, row = 1, sticky = 'news')
         self.update_idletasks()

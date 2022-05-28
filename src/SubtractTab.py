@@ -1,13 +1,13 @@
 import os
 import numpy as np
-from Maps import Map
-from Anchors import Anchors
+from .Maps import Map
+from .Anchors import Anchors
 from functools import partial
 import matplotlib.pyplot as plt
 from idlelib.tooltip import Hovertip
 from settings import TEMP_PATH, COLORS
 from tkinter.filedialog import askopenfilename
-from Global_Functions import findClosest, averageBox
+from .Global_Functions import findClosest, averageBox
 from tkinter.messagebox import showinfo, askyesno, showerror
 from tkinter import Tk, Button, BooleanVar, Frame, Checkbutton, ttk
 

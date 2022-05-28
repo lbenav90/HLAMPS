@@ -1,11 +1,11 @@
 import os
 import numpy as np
-from Maps import Map
+from .Maps import Map
 from settings import COLORS
 import matplotlib.pyplot as plt
 from idlelib.tooltip import Hovertip
-from Bands import Band, Bands, FitBaseline
-from Global_Functions import calculateModel
+from .Bands import Band, Bands, FitBaseline
+from .Global_Functions import calculateModel
 from tkinter.filedialog import askopenfilename
 from lmfit import Parameters, Minimizer, fit_report
 from tkinter.messagebox import showinfo, showwarning, askyesno, showerror

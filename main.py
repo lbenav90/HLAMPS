@@ -1,13 +1,13 @@
 import os
 import time
 import numpy as np
-from Maps import Maps, Map
+from src.Maps import Maps, Map
 from shutil import copy
-from PlotFrame import PlotFrame
-from LegFrame import LegFrame
-from StatFrame import StatFrame
-from TabNotebook import TabNotebook
-from Averages import Averages
+from src.PlotFrame import PlotFrame
+from src.LegFrame import LegFrame
+from src.StatFrame import StatFrame
+from src.TabNotebook import TabNotebook
+from src.Averages import Averages
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import askyesno, showinfo
 from settings import TEMP_PATH, LOGS, IMAGES, ABOUT_TITLE, ABOUT_TEXT

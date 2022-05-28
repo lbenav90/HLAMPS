@@ -20,8 +20,9 @@ class GUI(Tk):
         super().__init__()
         self.protocol('WM_DELETE_WINDOW', self.onClose)
         self.title('HLAMPS')
+        self.geometry(f'{int(self.winfo_screenwidth() * 0.9)}x{int(self.winfo_screenheight() * 0.9)}')
+        self.resizable(False, False)
         self.iconbitmap(rf'{IMAGES}/main.ico')
-        self.state('zoomed')
         
         ### Create program Maps and Averages instances to keep track
         self.maps = Maps()

@@ -1,7 +1,7 @@
 import os
 
 # Directory where the main.py and setting.py scripts is located
-INSTALL_DIR = os.getcwd()
+INSTALL_DIR = os.path.dirname(os.path.realpath(__file__))
 
 os.chdir(INSTALL_DIR)
 TEMP_PATH = f'{INSTALL_DIR}/temp'

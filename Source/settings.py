@@ -1,7 +1,12 @@
-import os
+import os, sys
 
 # Directory where the main.py and setting.py scripts is located
-INSTALL_DIR = os.path.dirname(os.path.realpath(__file__))
+if getattr(sys, 'frozen', False):
+        INSTALL_DIR = os.path.dirname(sys.executable)
+else:
+        INSTALL_DIR = os.path.dirname(os.path.abspath(__file__))
+
+print(INSTALL_DIR)
 
 os.chdir(INSTALL_DIR)
 TEMP_PATH = f'{INSTALL_DIR}/temp'

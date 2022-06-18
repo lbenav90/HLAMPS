@@ -11,6 +11,8 @@ class StatFrame(Frame):
         self.config({'width': int(window.winfo_width() * 0.45),
                      'height': int(window.winfo_height() * 0.3)})
         
+        self.window = window
+        
         self.grid(column = 1, row = 1, sticky = 'news')
         self.update_idletasks()
 
@@ -29,7 +31,7 @@ class StatFrame(Frame):
     
     def getLimits(self):
         ''' Gets the current limits from the PltFigure object '''
-        bounds, limits = self.master.plotFrame.figure.getLimits()
+        bounds, limits = self.window.plotFrame.figure.getLimits()
         self.xmin.set(f'{limits.getXLim()[0]:.2f}')
         self.xmax.set(f'{limits.getXLim()[1]:.2f}')
         self.ymin.set(f'{limits.getYLim()[0]:.2f}')
@@ -38,16 +40,16 @@ class StatFrame(Frame):
         
     def changeZoom(self):
         ''' Change plot limits to the current entry values '''
-        self.master.plotFrame.figure.changeXZoom(xmin = float(self.xmin.get()),
+        self.window.plotFrame.figure.changeXZoom(xmin = float(self.xmin.get()),
                                                  xmax = float(self.xmax.get()))
-        self.master.plotFrame.figure.changeYZoom(ymin = float(self.ymin.get()),
+        self.window.plotFrame.figure.changeYZoom(ymin = float(self.ymin.get()),
                                                  ymax = float(self.ymax.get()))
         return 0
     
     def resetZoom(self):
         ''' Autoscale zoom for the current data '''
-        self.master.plotFrame.figure.changeXZoom()
-        self.master.plotFrame.figure.changeYZoom()
+        self.window.plotFrame.figure.changeXZoom()
+        self.window.plotFrame.figure.changeYZoom()
         return 0
     
     def configureLayout(self):
@@ -58,7 +60,7 @@ class StatFrame(Frame):
         # Setup progress bar
         self.progressLabel = Label(self, text = 'Processing: ')
         self.progressLabel.grid(column = 0, row = 1, sticky = 'w')
-        self.progressBar = Progressbar(self, length = 250, 
+        self.progressBar = Progressbar(self, length = int(self.window.winfo_width() * 0.2), 
                                        mode = 'determinate')
         self.progressBar.grid(column = 0, columnspan = 4, 
                               row = 2, rowspan = 2, 
@@ -77,16 +79,16 @@ class StatFrame(Frame):
         Label(self, text = 'Y max:').grid(column = 8, row = 3, sticky = 'nw')
         
         # Entries with input validation for changing limits
-        Entry(self, textvariable = self.xmin, width = 10, validate = 'all', 
+        Entry(self, textvariable = self.xmin, width = int(self.window.winfo_width() * 0.01), validate = 'all', 
               validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 7, row = 2, sticky = 'nw')
-        Entry(self, textvariable = self.xmax, width = 10, validate = 'all', 
+        Entry(self, textvariable = self.xmax, width = int(self.window.winfo_width() * 0.01), validate = 'all', 
               validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 7, row = 3, sticky = 'nw')
-        Entry(self, textvariable = self.ymin, width = 10, validate = 'all', 
+        Entry(self, textvariable = self.ymin, width = int(self.window.winfo_width() * 0.01), validate = 'all', 
               validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 9, row = 2, sticky = 'nw')
-        Entry(self, textvariable = self.ymax, width = 10, validate = 'all', 
+        Entry(self, textvariable = self.ymax, width = int(self.window.winfo_width() * 0.01), validate = 'all', 
               validatecommand = (self.register(isNumber), '%P')
               ).grid(column = 9, row = 3, sticky = 'nw')
         
@@ -104,7 +106,7 @@ class StatFrame(Frame):
         # Setup current limits frame
 
         # Setup scrollable text Log
-        self.logFrame = Frame(self, width = int(self.master.winfo_width() * 0.45), height = 120)
+        self.logFrame = Frame(self, width = int(self.window.winfo_width() * 0.45), height = 120)
         self.logFrame.grid(column = 0, columnspan = 13, row = 5, sticky = 'news', pady = 5, padx = 5)
         self.logFrame.grid_propagate(False)
         self.logText = ScrolledText(self.logFrame, width = 70, height = 5)

@@ -8,7 +8,7 @@ This software is a complement of the [LabSpec6](https://www.horiba.com/aut/produ
 
 LabSpec6 adquisition software has several mapping modes. We focus primarily in the square/rectangular spatial maps. The image below illustrates the setup of a map:
 
-![Yeast cell with adquisition grid](.\Source\images\cellgrid.png)
+![Yeast cell with adquisition grid](./Source/images/cellgrid.png)
 
 In each grid point, a [Raman spectrum](https://en.wikipedia.org/wiki/Raman_spectroscopy "Wikipedia article") is adquired, which contains the fingerprint of the molecules present in that area. While LabSpect has some map processing capabilities, it doesn't have band fintting capabilities, which is key to identifiy each component of the total spectra. HLAMPS comes to ease the batch processing of all these spectra, given that each map could contain thousands of spectra, making it impossible to process manually.
 

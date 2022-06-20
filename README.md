@@ -1,7 +1,7 @@
 # HLAMPS
 ## Horiba LabSpec Automatic Map Processing Software
 
-#### Video Demo:  <URL HERE>
+#### Video Demo:  https://youtu.be/MSBflsyY5xg
 #### Description:
 
 This software is a complement of the [LabSpec6](https://www.horiba.com/aut/products/detail/action/show/Product/labspec-6-spectroscopy-suite-software-1843/ "Horiba LabSpec6 Spectroscopy Suite") adquisition and processing software. It performs automatic batch processing of square/rectangular maps.
